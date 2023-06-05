@@ -1,6 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+# include <stdio.h>
+# include <unistd.h>
+# include <stdlib.h>
+# include <sys/wait.h>
+# include <fcntl.h>
 
 int ft_strlen(char *str)
 {
@@ -200,26 +202,68 @@ void	free_array(char **array)
 	free(array);
 }
 
+char **clean_cm(char **argv, int argc)
+{
+	int i;
+	int j;
+	char **new;
+
+	i = 1;
+	j = 0;
+	new = malloc(sizeof(char *) * argc - 1);
+	while (argv[i])
+	{
+		new[i - 1] = ft_strdup(argv[i]);
+		i++;
+	}
+	new[i - 1] = NULL;
+	return new;
+}
+
+void	child_one(char **envp, char **cmd, char *path)
+{
+	int fd[2];
+	char *line;
+	pid_t pid;
+
+	pid = fork();
+	if (pipe(fd) == -1)
+		exit(0);
+	if (pid == 0)
+	{
+		close(fd[0]);
+		dup2(fd[1], STDOUT_FILENO);
+		execve(path, cmd, envp);
+	}
+	else
+	{
+		close(fd[1]);
+		dup2(fd[0], STDIN_FILENO);
+		printf("parent\n");
+	}
+}
+
 int main(int argc, char **argv, char **envp)
 {
     char **paths;
 	char *path;
+	char **cmd;
     int i = 0;
 
     paths = 0;
     paths = get_paths(envp);
-	while(envp[i])
+	path = find_path(paths, argv[1]);
+	cmd = clean_cm(argv, argc);
+	while(cmd[i])
 	{
-		printf("%s\n", envp[i]);
+		printf("cmd[%d] = %s\n", i, cmd[i]);
 		i++;
 	}
-	i = 0;
-    while (paths[i])
-    {
-        printf("%s\n", paths[i]);
-        i++;
-    }
-	path = find_path(paths, argv[1]);
+	while(argc > 1)
+	{
+		child_one(envp, cmd, path);
+		argc--;
+	}
 	free(path);
 	free_array(paths);
     return 0;
