@@ -272,29 +272,34 @@ char ***store_cmds(char *line, char **envp)
 	return cmds;
 }
 
-t_node	*create_node(char *cmd, char **args)
+void	add_node(t_node **head, t_node *node)
 {
-	t_node	*node;
+    t_node	*tmp;
 
-	node = (t_node *)malloc(sizeof(t_node));
-	node->cmd = cmd;
-	node->args = args;
-	node->input = 0;
-	node->output = 0;
-	node->append = 0;
-	node->here_doc = 0;
-	node->next = NULL;
-	return (node);
+    if (*head == NULL)
+    {
+        *head = node;
+        return ;
+    }
+    tmp = *head;
+    while (tmp->next != NULL)
+        tmp = tmp->next;
+    tmp->next = node;
 }
 
-void add_node(t_node **head, t_node *node)
+t_node	*create_node(char *cmd, char **args)
 {
-	t_node *aux;
+    t_node	*node;
 
-	aux = *head;
-	while (aux->next)
-		aux = aux->next;
-	aux->next = node;
+    node = (t_node *)malloc(sizeof(t_node));
+    node->cmd = cmd;
+    node->args = args;
+    node->input = 0;
+    node->output = 0;
+    node->append = 0;
+    node->here_doc = 0;
+    node->next = NULL;
+    return (node);
 }
 
 t_node *create_list(char ***cmds)
@@ -313,6 +318,41 @@ t_node *create_list(char ***cmds)
 		i++;
 	}
 	return head;
+}
+
+void    fromtritolst(t_node **head, char ***cmds)
+{
+    t_node	*tmp;
+    int		i;
+
+    tmp = *head;
+    i = 0;
+    while (tmp != NULL)
+    {
+        tmp->cmd = **cmds;
+        tmp->args = cmds[i];
+        tmp = tmp->next;
+        i++;
+    }
+}
+
+void    print_list(t_node *head)
+{
+    t_node	*tmp;
+    int		i;
+
+    tmp = head;
+    while (tmp != NULL)
+    {
+        i = 0;
+        printf("cmd = %s\n", tmp->cmd);
+        while (tmp->args[i])
+        {
+            printf("args %d = %s\n", i, tmp->args[i]);
+            i++;
+        }
+        tmp = tmp->next;
+    }
 }
 
 void	child_one(char **envp, char **cmd, char *path)
@@ -367,17 +407,22 @@ void	child_one(char **envp, char **cmd, char *path)
 
 int main(int argc, char **argv, char **envp)
 {
+    int i;
 	char *line;
 	char ***cmds;
+    //double pointer á toa
+    t_node **headmaster;
 
 	line = NULL;
 	while(1)
 	{
 		line = readline("minishell$ ");
 		cmds = store_cmds(line, envp);
-
-		print_triple(cmds);
+        headmaster[i] = create_list(cmds);
+        print_list(headmaster[i]);
+		//print_triple(cmds);
 		free(line);
+        i++;
 	}
 //	pipex(argc, argv, envp);
 	return 0;
