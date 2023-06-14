@@ -1,8 +1,43 @@
-# include <stdio.h>
-# include <unistd.h>
-# include <stdlib.h>
-# include <sys/wait.h>
-# include <fcntl.h>
+# include<stdio.h>
+# include<readline/readline.h>
+# include<readline/history.h>
+# include<signal.h>
+# include<unistd.h>
+# include<stdlib.h>
+# include<string.h>
+# include<sys/wait.h>
+# include<fcntl.h>
+
+void	print_array(char **array)
+{
+	int i;
+
+	i = 0;
+	while (array[i])
+	{
+		printf("array[%d] = %s\n", i, array[i]);
+		i++;
+	}
+}
+
+void print_triple(char ***array)
+{
+	int i;
+	int j;
+
+	i = 0;
+	j = 0;
+	while (array[i])
+	{
+		while (array[i][j])
+		{
+			printf("array[%d][%d] = %s\n", i, j, array[i][j]);
+			j++;
+		}
+		j = 0;
+		i++;
+	}
+}
 
 int ft_strlen(char *str)
 {
@@ -202,22 +237,47 @@ void	free_array(char **array)
 	free(array);
 }
 
-char **clean_cm(char **argv, int argc)
+char *ft_trim(char *str, char *set)
 {
 	int i;
 	int j;
-	char **new;
+	char *trim;
 
-	i = 1;
+	i = 0;
 	j = 0;
-	new = malloc(sizeof(char *) * argc - 1);
-	while (argv[i])
+	trim = malloc(sizeof(char) * ft_strlen(str) + 1);
+	while (str[i])
 	{
-		new[i - 1] = ft_strdup(argv[i]);
+		if (str[i] != set[0] && str[i] != set[1])
+		{
+			trim[j] = str[i];
+			j++;
+		}
 		i++;
 	}
-	new[i - 1] = NULL;
-	return new;
+	trim[j] = '\0';
+	return trim;
+}
+
+char ***store_cmds(char *line, char **envp)
+{
+	char ***cmds;
+	char **aux;
+	int i;
+	int j;
+
+	i = 0;
+	j = 0;
+	cmds = malloc(sizeof(char **) * 10);
+	aux = ft_split(line, '|');
+	while (aux[i])
+	{
+		cmds[i] = ft_split(aux[i], ' ');
+		i++;
+	}
+	cmds[i] = NULL;
+	free_array(aux);
+	return cmds;
 }
 
 void	child_one(char **envp, char **cmd, char *path)
@@ -243,28 +303,47 @@ void	child_one(char **envp, char **cmd, char *path)
 	}
 }
 
+//int pipex(int argc, char **argv, char **envp)
+//{
+//    char **paths;
+//	char *path;
+//	char **cmd;
+//    int i = 0;
+//
+//    paths = 0;
+//    paths = get_paths(envp);
+//	path = find_path(paths, argv[1]);
+//	cmd = clean_cm(argv, argc);
+//	print_array(cmd);
+//	while(cmd[i])
+//	{
+//		printf("cmd[%d] = %s\n", i, cmd[i]);
+//		i++;
+//	}
+//	while(argc > 1)
+//	{
+//		child_one(envp, cmd, path);
+//		argc--;
+//	}
+//	free(path);
+//	free_array(paths);
+//    return 0;
+//}
+
 int main(int argc, char **argv, char **envp)
 {
-    char **paths;
-	char *path;
-	char **cmd;
-    int i = 0;
+	char *line;
+	char ***cmds;
 
-    paths = 0;
-    paths = get_paths(envp);
-	path = find_path(paths, argv[1]);
-	cmd = clean_cm(argv, argc);
-	while(cmd[i])
+	line = NULL;
+	while(1)
 	{
-		printf("cmd[%d] = %s\n", i, cmd[i]);
-		i++;
+		line = readline("minishell$ ");
+		cmds = store_cmds(line, envp);
+
+		print_triple(cmds);
+		free(line);
 	}
-	while(argc > 1)
-	{
-		child_one(envp, cmd, path);
-		argc--;
-	}
-	free(path);
-	free_array(paths);
-    return 0;
+//	pipex(argc, argv, envp);
+	return 0;
 }
