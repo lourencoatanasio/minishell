@@ -1,12 +1,4 @@
-# include<stdio.h>
-# include<readline/readline.h>
-# include<readline/history.h>
-# include<signal.h>
-# include<unistd.h>
-# include<stdlib.h>
-# include<string.h>
-# include<sys/wait.h>
-# include<fcntl.h>
+#include "minishell.h"
 
 void	print_array(char **array)
 {
@@ -278,6 +270,49 @@ char ***store_cmds(char *line, char **envp)
 	cmds[i] = NULL;
 	free_array(aux);
 	return cmds;
+}
+
+t_node	*create_node(char *cmd, char **args)
+{
+	t_node	*node;
+
+	node = (t_node *)malloc(sizeof(t_node));
+	node->cmd = cmd;
+	node->args = args;
+	node->input = 0;
+	node->output = 0;
+	node->append = 0;
+	node->here_doc = 0;
+	node->next = NULL;
+	return (node);
+}
+
+void add_node(t_node **head, t_node *node)
+{
+	t_node *aux;
+
+	aux = *head;
+	while (aux->next)
+		aux = aux->next;
+	aux->next = node;
+}
+
+t_node *create_list(char ***cmds)
+{
+	t_node *head;
+	t_node *node;
+	int i;
+
+	i = 0;
+	head = create_node(cmds[i][0], cmds[i]);
+	i++;
+	while (cmds[i])
+	{
+		node = create_node(cmds[i][0], cmds[i]);
+		add_node(&head, node);
+		i++;
+	}
+	return head;
 }
 
 void	child_one(char **envp, char **cmd, char *path)
