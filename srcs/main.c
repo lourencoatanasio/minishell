@@ -1,4 +1,4 @@
-#include "minishell.h"
+#include "../minishell.h"
 
 void	print_array(char **array)
 {
@@ -48,6 +48,8 @@ int	get_num_words(char *str, char c)
 
     i = 0;
     words = 0;
+	if(!str)
+		return (0);
     while (str[i] && str[i] == c)
         i++;
     while (str[i])
@@ -90,6 +92,8 @@ char	**ft_split(char *str, char c)
 
     i = 0;
     words = get_num_words(str, c);
+	if(words == 0)
+		return (NULL);
     array = 0;
     array = malloc(sizeof(char *) * words + 10);
     if (!array)
@@ -133,7 +137,6 @@ char	*ft_strnstr(const char *big, const char *little)
 
 char **get_paths(char **envp)
 {
-    char **paths;
     char *aux;
     int i;
 
@@ -206,9 +209,11 @@ char	*find_path(char **paths, char *cmd)
 		aux = ft_strjoin(paths[i], "/");
 		path = ft_strjoin(aux, cmd);
 		free(aux);
-		printf("path = %s\n", path);
 		if (access(path, F_OK) == 0)
+		{
+			printf("path = %s\n", path);
 			return (path);
+		}
 		free(path);
 		i++;
 	}
@@ -221,6 +226,8 @@ void	free_array(char **array)
 	int i;
 
 	i = 0;
+	if(!array)
+		return ;
 	while (array[i])
 	{
 		free(array[i]);
@@ -251,15 +258,13 @@ char *ft_trim(char *str, char *set)
 	return trim;
 }
 
-char ***store_cmds(char *line, char **envp)
+char ***store_cmds(char *line)
 {
 	char ***cmds;
 	char **aux;
 	int i;
-	int j;
 
 	i = 0;
-	j = 0;
 	cmds = malloc(sizeof(char **) * 10);
 	aux = ft_split(line, '|');
 	while (aux[i])
@@ -287,13 +292,35 @@ void	add_node(t_node **head, t_node *node)
     tmp->next = node;
 }
 
-t_node	*create_node(char *cmd, char **args)
+int sizeof_array(char **array)
+{
+	int i;
+
+	i = 0;
+	while (array[i])
+		i++;
+	return i;
+}
+
+t_node	*create_node(char **args)
 {
     t_node	*node;
+	int		i;
 
+	i = 1;
     node = (t_node *)malloc(sizeof(t_node));
-    node->cmd = cmd;
-    node->args = args;
+	node->args = (char **)malloc(sizeof(char *) * sizeof_array(args));
+    node->cmd = ft_strdup(args[0]);
+	if(sizeof_array(args) > 1)
+	{
+		while(args[i])
+		{
+			node->args[i - 1] = ft_strdup(args[i]);
+			i++;
+		}
+	}
+	else
+		node->args[0] = NULL;
     node->input = 0;
     node->output = 0;
     node->append = 0;
@@ -305,44 +332,27 @@ t_node	*create_node(char *cmd, char **args)
 t_node *create_list(char ***cmds)
 {
 	t_node *head;
-	t_node *node;
 	int i;
 
 	i = 0;
-	head = create_node(cmds[i][0], cmds[i]);
-	i++;
+	head = NULL;
+	if(!cmds)
+		return NULL;
 	while (cmds[i])
 	{
-		node = create_node(cmds[i][0], cmds[i]);
-		add_node(&head, node);
+		add_node(&head, create_node(cmds[i]));
 		i++;
 	}
 	return head;
 }
 
-void    fromtritolst(t_node **head, char ***cmds)
+void    print_list(t_node **head)
 {
     t_node	*tmp;
     int		i;
 
-    tmp = *head;
-    i = 0;
-    while (tmp != NULL)
-    {
-        tmp->cmd = **cmds;
-        tmp->args = cmds[i];
-        tmp = tmp->next;
-        i++;
-    }
-}
-
-void    print_list(t_node *head)
-{
-    t_node	*tmp;
-    int		i;
-
-    tmp = head;
-    while (tmp != NULL)
+	tmp = *head;
+    while (tmp)
     {
         i = 0;
         printf("cmd = %s\n", tmp->cmd);
@@ -358,7 +368,6 @@ void    print_list(t_node *head)
 void	child_one(char **envp, char **cmd, char *path)
 {
 	int fd[2];
-	char *line;
 	pid_t pid;
 
 	pid = fork();
@@ -378,51 +387,81 @@ void	child_one(char **envp, char **cmd, char *path)
 	}
 }
 
-//int pipex(int argc, char **argv, char **envp)
-//{
-//    char **paths;
-//	char *path;
-//	char **cmd;
-//    int i = 0;
-//
-//    paths = 0;
-//    paths = get_paths(envp);
-//	path = find_path(paths, argv[1]);
-//	cmd = clean_cm(argv, argc);
-//	print_array(cmd);
-//	while(cmd[i])
-//	{
-//		printf("cmd[%d] = %s\n", i, cmd[i]);
-//		i++;
-//	}
-//	while(argc > 1)
-//	{
-//		child_one(envp, cmd, path);
-//		argc--;
-//	}
-//	free(path);
-//	free_array(paths);
-//    return 0;
-//}
+int pipex(char **envp, t_node **head)
+{
+	char **paths;
+	char *path;
+	char **cmd;
+
+	if (!(*head))
+		return 0;
+	paths = 0;
+	paths = get_paths(envp);
+	path = find_path(paths, (*head)->cmd);
+	cmd = (*head)->args;
+	printf("path = %s\n", path);
+	print_array(cmd);
+	pipex(envp, &(*head)->next);
+	return 0;
+}
+void free_list(t_node **head)
+{
+	t_node *tmp;
+
+	while (*head)
+	{
+		tmp = *head;
+		*head = (*head)->next;
+		free(tmp->cmd);
+		free_array(tmp->args);
+		free(tmp);
+	}
+}
+
+void free_triple(char ***triple)
+{
+	int i;
+	int j;
+
+	i = 0;
+	j = 0;
+	if(!triple)
+		return ;
+	while (triple[i])
+	{
+		while (triple[i][j])
+		{
+			free(triple[i][j]);
+			j++;
+		}
+		free(triple[i]);
+		i++;
+	}
+	free(triple);
+}
 
 int main(int argc, char **argv, char **envp)
 {
-    int i;
 	char *line;
 	char ***cmds;
-    //double pointer á toa
-    t_node **headmaster;
+    t_node *headmaster;
 
-	line = NULL;
+	(void )argc;
+	(void )argv;
+	(void )envp;
 	while(1)
 	{
+		cmds = NULL;
+		headmaster = NULL;
+		line = NULL;
 		line = readline("minishell$ ");
-		cmds = store_cmds(line, envp);
-        headmaster[i] = create_list(cmds);
-        print_list(headmaster[i]);
-		//print_triple(cmds);
+		printf("line = %s|\n", line);
+		cmds = store_cmds(line);
+        headmaster = create_list(cmds);
+		pipex(envp, &headmaster);
+		free_list(&headmaster);
+		free_triple(cmds);
 		free(line);
-        i++;
 	}
 //	pipex(argc, argv, envp);
 	return 0;

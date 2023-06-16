@@ -26,26 +26,25 @@ typedef struct s_node
 	struct s_node	*next;
 }		t_node;
 
-void	child_one(char **envp, char **cmd, char *path);
-void    print_list(t_node *head);
-void    fromtritolst(t_node **head, char ***cmds);
-void    print_list(t_node *head);
-t_node *create_list(char ***cmds);
-t_node *create_node(char *cmd, char **args);
-void	add_node(t_node **head, t_node *node);
-char ***store_cmds(char *line, char **envp);
-char *ft_trim(char *str, char *set);
-void	free_array(char **array);
-char	*find_path(char **paths, char *cmd);
-char *ft_strdup(char *str);
-char *ft_strjoin(char *s1, char *s2);
-char **get_paths(char **envp);
-char	*ft_strnstr(const char *big, const char *little);
-char	**ft_split(char *str, char c);
-char	*get_word(char *str, char c);
-int	get_num_words(char *str, char c);
-int ft_strlen(char *str);
+void print_array(char **array);
 void print_triple(char ***array);
-void	print_array(char **array);
+int ft_strlen(char *str);
+int get_num_words(char *str, char c);
+char *get_word(char *str, char c);
+char **ft_split(char *str, char c);
+char *ft_strnstr(const char *big, const char *little);
+char **get_paths(char **envp);
+char *ft_strjoin(char *s1, char *s2);
+char *ft_strdup(char *str);
+char *find_path(char **paths, char *cmd);
+void free_array(char **array);
+char *ft_trim(char *str, char *set);
+char ***store_cmds(char *line);
+void add_node(t_node **head, t_node *node);
+int sizeof_array(char **array);
+t_node *create_node(char **args);
+t_node *create_list(char ***cmds);
+void print_list(t_node **head);
+void child_one(char **envp, char **cmd, char *path);
 
 #endif //MINISHELL_H
