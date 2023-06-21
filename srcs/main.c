@@ -7,6 +7,7 @@ void	print_array(char **array)
 	i = 0;
 	while (array[i])
 	{
+        printf("array check\n");
 		printf("array[%d] = %s\n", i, array[i]);
 		i++;
 	}
@@ -309,6 +310,7 @@ t_node	*create_node(char **args)
 
 	i = 1;
     node = (t_node *)malloc(sizeof(t_node));
+    printf("sizeof_array = %d\n", sizeof_array(args));
 	node->args = (char **)malloc(sizeof(char *) * sizeof_array(args));
     node->cmd = ft_strdup(args[0]);
 	if(sizeof_array(args) > 1)
@@ -320,7 +322,7 @@ t_node	*create_node(char **args)
 		}
 	}
 	else
-		node->args[0] = NULL;
+		node->args[0] = node->cmd;
     node->input = 0;
     node->output = 0;
     node->append = 0;
@@ -329,9 +331,8 @@ t_node	*create_node(char **args)
     return (node);
 }
 
-t_node *create_list(char ***cmds)
+t_node *create_list(char ***cmds, t_node *head)
 {
-	t_node *head;
 	int i;
 
 	i = 0;
@@ -399,11 +400,15 @@ int pipex(char **envp, t_node **head)
 	paths = get_paths(envp);
 	path = find_path(paths, (*head)->cmd);
 	cmd = (*head)->args;
-	printf("path = %s\n", path);
-	print_array(cmd);
+    printf("check\n");
+    print_array(cmd);
+    printf("cmd[0] = %s\n", cmd[0]);
+    execve(path, cmd, envp);
+    printf("path = %s\n", path);
 	pipex(envp, &(*head)->next);
 	return 0;
 }
+
 void free_list(t_node **head)
 {
 	t_node *tmp;
@@ -448,20 +453,23 @@ int main(int argc, char **argv, char **envp)
 
 	(void )argc;
 	(void )argv;
-	(void )envp;
 	while(1)
 	{
 		cmds = NULL;
 		headmaster = NULL;
 		line = NULL;
 		line = readline("minishell$ ");
-		printf("line = %s|\n", line);
-		cmds = store_cmds(line);
-        headmaster = create_list(cmds);
-		pipex(envp, &headmaster);
-		free_list(&headmaster);
-		free_triple(cmds);
-		free(line);
+        if(line != NULL)
+        {
+            cmds = store_cmds(line);
+            print_array(cmds[0]);
+            headmaster = create_list(cmds, headmaster);
+            printf("list args = %s\n", headmaster->args[0]);
+            pipex(envp, &headmaster);
+            free_list(&headmaster);
+            free_triple(cmds);
+            free(line);
+        }
 	}
 //	pipex(argc, argv, envp);
 	return 0;

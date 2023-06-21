@@ -43,7 +43,7 @@ char ***store_cmds(char *line);
 void add_node(t_node **head, t_node *node);
 int sizeof_array(char **array);
 t_node *create_node(char **args);
-t_node *create_list(char ***cmds);
+t_node *create_list(char ***cmds, t_node *head);
 void print_list(t_node **head);
 void child_one(char **envp, char **cmd, char *path);
 
