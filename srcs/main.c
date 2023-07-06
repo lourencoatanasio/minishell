@@ -7,10 +7,11 @@ void	print_array(char **array)
 	i = 0;
 	while (array[i])
 	{
-        printf("array check\n");
+        printf("=======================\narray check\n");
 		printf("array[%d] = %s\n", i, array[i]);
 		i++;
 	}
+	printf("=======================\n");
 }
 
 void print_triple(char ***array)
@@ -308,7 +309,7 @@ t_node	*create_node(char **args)
     t_node	*node;
 	int		i;
 
-	i = 1;
+	i = 0;
     node = (t_node *)malloc(sizeof(t_node));
     printf("sizeof_array = %d\n", sizeof_array(args));
 	node->args = (char **)malloc(sizeof(char *) * sizeof_array(args));
@@ -317,12 +318,17 @@ t_node	*create_node(char **args)
 	{
 		while(args[i])
 		{
-			node->args[i - 1] = ft_strdup(args[i]);
+			node->args[i] = ft_strdup(args[i]);
 			i++;
 		}
+		printf("check node\n");
+		node->args[i] = NULL;
 	}
 	else
+	{
 		node->args[0] = node->cmd;
+		node->args[1] = NULL;
+	}
     node->input = 0;
     node->output = 0;
     node->append = 0;
@@ -353,39 +359,60 @@ void    print_list(t_node **head)
     int		i;
 
 	tmp = *head;
-    while (tmp)
+    while (tmp != NULL)
     {
         i = 0;
-        printf("cmd = %s\n", tmp->cmd);
+        printf("print_list_cmd = %s\n", tmp->cmd);
         while (tmp->args[i])
         {
-            printf("args %d = %s\n", i, tmp->args[i]);
+            printf("print_list_args %d = %s\n", i, tmp->args[i]);
             i++;
         }
+		printf("tmp = %p\n", tmp);
         tmp = tmp->next;
     }
 }
 
-void	child_one(char **envp, char **cmd, char *path)
+void child_one(char **envp, char **cmd, char *path)
 {
 	int fd[2];
 	pid_t pid;
 
-	pid = fork();
 	if (pipe(fd) == -1)
 		exit(0);
-	if (pid == 0)
+
+	pid = fork();
+	if (pid == -1)
+		exit(0);
+	else if (pid == 0)
 	{
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
+		close(fd[1]);  // Close the duplicated file descriptor
 		execve(path, cmd, envp);
 	}
 	else
 	{
 		close(fd[1]);
 		dup2(fd[0], STDIN_FILENO);
+		close(fd[0]);  // Close the duplicated file descriptor
 		printf("parent\n");
 	}
+}
+
+int	node_count(t_node **head)
+{
+	t_node *tmp;
+	int i;
+
+	i = 0;
+	tmp = *head;
+	while (tmp)
+	{
+		i++;
+		tmp = tmp->next;
+	}
+	return i;
 }
 
 int pipex(char **envp, t_node **head)
@@ -393,19 +420,39 @@ int pipex(char **envp, t_node **head)
 	char **paths;
 	char *path;
 	char **cmd;
+	t_node *tmp;
+	int stdout;
+	int stdin;
 
 	if (!(*head))
 		return 0;
+	stdout = dup(STDOUT_FILENO);
+	stdin = dup(STDIN_FILENO);
 	paths = 0;
 	paths = get_paths(envp);
-	path = find_path(paths, (*head)->cmd);
-	cmd = (*head)->args;
-    printf("check\n");
-    print_array(cmd);
-    printf("cmd[0] = %s\n", cmd[0]);
-    execve(path, cmd, envp);
-    printf("path = %s\n", path);
-	pipex(envp, &(*head)->next);
+
+	tmp = *head;
+	while(node_count(head) >= 2 && tmp->next != NULL)
+	{
+		cmd = (*tmp).args;
+		path = find_path(paths, (*tmp).cmd);
+		child_one(envp, cmd, path);
+		free(path);
+		tmp = tmp->next;
+	}
+
+	cmd = (*tmp).args;
+	path = find_path(paths, (*tmp).cmd);
+	print_array(cmd);
+	printf("check\n");
+	printf("path = %s\n", path);
+	dup2(stdout, STDOUT_FILENO);
+	if(fork() == 0)
+		execve(path, cmd, envp);
+	wait(NULL);
+	dup2(stdin, STDIN_FILENO);
+	free(path);
+	free_array(paths);
 	return 0;
 }
 
@@ -417,10 +464,11 @@ void free_list(t_node **head)
 	{
 		tmp = *head;
 		*head = (*head)->next;
-		free(tmp->cmd);
-		free_array(tmp->args);
+		if(tmp->args)
+			free_array(tmp->args);
 		free(tmp);
 	}
+	printf("free_list\n");
 }
 
 void free_triple(char ***triple)
@@ -429,11 +477,11 @@ void free_triple(char ***triple)
 	int j;
 
 	i = 0;
-	j = 0;
 	if(!triple)
 		return ;
 	while (triple[i])
 	{
+		j = 0;
 		while (triple[i][j])
 		{
 			free(triple[i][j]);
@@ -462,11 +510,12 @@ int main(int argc, char **argv, char **envp)
         if(line != NULL)
         {
             cmds = store_cmds(line);
-            print_array(cmds[0]);
+//            print_array(cmds[0]);
             headmaster = create_list(cmds, headmaster);
-            printf("list args = %s\n", headmaster->args[0]);
+			print_list(&headmaster);
             pipex(envp, &headmaster);
-            free_list(&headmaster);
+			free_list(&headmaster);
+			print_triple(cmds);
             free_triple(cmds);
             free(line);
         }
