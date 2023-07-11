@@ -1,5 +1,28 @@
 #include "../minishell.h"
 
+int ft_atoi(char *str)
+{
+	int i;
+	int sign;
+	int num;
+
+	i = 0;
+	sign = 1;
+	num = 0;
+	while (str[i] && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' ||
+				str[i] == '\v' || str[i] == '\f' || str[i] == '\r'))
+		i++;
+	if (str[i] && (str[i] == '-' || str[i] == '+'))
+	{
+		if (str[i] == '-')
+			sign *= -1;
+		i++;
+	}
+	while (str[i] && (str[i] >= '0' && str[i] <= '9'))
+		num = num * 10 + (str[i++] - '0');
+	return (num * sign);
+}
+
 void	print_array(char **array)
 {
 	int i;
@@ -304,7 +327,7 @@ int sizeof_array(char **array)
 	return i;
 }
 
-t_node	*create_node(char **args)
+t_node	*create_node_cmd(char **args)
 {
     t_node	*node;
 	int		i;
@@ -347,7 +370,7 @@ t_node *create_list(char ***cmds, t_node *head)
 		return NULL;
 	while (cmds[i])
 	{
-		add_node(&head, create_node(cmds[i]));
+		add_node(&head, create_node_cmd(cmds[i]));
 		i++;
 	}
 	return head;
@@ -371,6 +394,18 @@ void    print_list(t_node **head)
 		printf("tmp = %p\n", tmp);
         tmp = tmp->next;
     }
+}
+
+void    print_history(t_history **head)
+{
+	t_history	*tmp;
+
+	tmp = *head;
+	while (tmp != NULL)
+	{
+		printf("print_list_cmd = %s\n", tmp->line);
+		tmp = tmp->next;
+	}
 }
 
 void child_one(char **envp, char **cmd, char *path)
@@ -493,6 +528,76 @@ void free_triple(char ***triple)
 	free(triple);
 }
 
+t_history	*create_node_history(char *line)
+{
+	t_history *node;
+
+	node = (t_history *)malloc(sizeof(t_history));
+	node->line = ft_strdup(line);
+	node->next = NULL;
+
+	return (node);
+}
+
+
+void	ft_add_history(char *line, t_history **history)
+{
+	t_history *tmp;
+	t_history *new;
+
+	tmp = *history;
+	new = create_node_history(line);
+	if(!tmp)
+	{
+		*history = new;
+		return ;
+	}
+	while(tmp->next)
+		tmp = tmp->next;
+	tmp->next = new;
+}
+
+char *ft_history_get(t_history **history, int index)
+{
+	t_history *tmp;
+	int i;
+
+	i = 0;
+	tmp = *history;
+	while (tmp)
+	{
+		if (i == index)
+			return (tmp->line);
+		i++;
+		tmp = tmp->next;
+	}
+	return (NULL);
+}
+
+void ctrl_c_handler(int signum) {
+	(void)signum;
+	printf("\n");  // Print a new line
+	// Display a new prompt
+}
+
+static void	ctrlc(int s)
+{
+	if (s == 2)
+	{
+		write(1, "\n", 1);
+		rl_on_new_line();
+		rl_replace_line("", 0);
+		rl_redisplay();
+	}
+}
+
+void	sig_handler(void)
+{
+	//Ultima cena foi aqui
+	signal(SIGINT, &ctrlc);
+	signal(SIGQUIT, SIG_IGN);
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
@@ -506,10 +611,12 @@ int main(int argc, char **argv, char **envp)
 		cmds = NULL;
 		headmaster = NULL;
 		line = NULL;
+		sig_handler();
 		line = readline("minishell$ ");
         if(line != NULL)
         {
-            cmds = store_cmds(line);
+			add_history(line);
+			cmds = store_cmds(line);
 //            print_array(cmds[0]);
             headmaster = create_list(cmds, headmaster);
 			print_list(&headmaster);

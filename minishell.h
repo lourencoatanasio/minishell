@@ -26,6 +26,12 @@ typedef struct s_node
 	struct s_node	*next;
 }		t_node;
 
+typedef struct s_history
+{
+	char *line;
+	struct s_history *next;
+}		t_history;
+
 void print_array(char **array);
 void print_triple(char ***array);
 int ft_strlen(char *str);
