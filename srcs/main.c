@@ -119,7 +119,6 @@ char	**ft_split(char *str, char c)
     words = get_num_words(str, c);
 	if(words == 0)
 		return (NULL);
-    array = 0;
     array = malloc(sizeof(char *) * words + 10);
     if (!array)
         return (NULL);
@@ -246,21 +245,6 @@ char	*find_path(char **paths, char *cmd)
 	return (NULL);
 }
 
-void	free_array(char **array)
-{
-	int i;
-
-	i = 0;
-	if(!array)
-		return ;
-	while (array[i])
-	{
-		free(array[i]);
-		i++;
-	}
-	free(array);
-}
-
 char *ft_trim(char *str, char *set)
 {
 	int i;
@@ -290,8 +274,14 @@ char ***store_cmds(char *line)
 	int i;
 
 	i = 0;
+	if(!line)
+		return (NULL);
 	cmds = malloc(sizeof(char **) * 10);
 	aux = ft_split(line, '|');
+	if(!aux) {
+		free(cmds);
+		return (NULL);
+	}
 	while (aux[i])
 	{
 		cmds[i] = ft_split(aux[i], ' ');
@@ -396,18 +386,6 @@ void    print_list(t_node **head)
     }
 }
 
-void    print_history(t_history **head)
-{
-	t_history	*tmp;
-
-	tmp = *head;
-	while (tmp != NULL)
-	{
-		printf("print_list_cmd = %s\n", tmp->line);
-		tmp = tmp->next;
-	}
-}
-
 void child_one(char **envp, char **cmd, char *path)
 {
 	int fd[2];
@@ -450,7 +428,7 @@ int	node_count(t_node **head)
 	return i;
 }
 
-int pipex(char **envp, t_node **head)
+void pipex(char **envp, t_node **head)
 {
 	char **paths;
 	char *path;
@@ -460,10 +438,9 @@ int pipex(char **envp, t_node **head)
 	int stdin;
 
 	if (!(*head))
-		return 0;
+		return ;
 	stdout = dup(STDOUT_FILENO);
 	stdin = dup(STDIN_FILENO);
-	paths = 0;
 	paths = get_paths(envp);
 
 	tmp = *head;
@@ -479,8 +456,6 @@ int pipex(char **envp, t_node **head)
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	print_array(cmd);
-	printf("check\n");
-	printf("path = %s\n", path);
 	dup2(stdout, STDOUT_FILENO);
 	if(fork() == 0)
 		execve(path, cmd, envp);
@@ -488,114 +463,7 @@ int pipex(char **envp, t_node **head)
 	dup2(stdin, STDIN_FILENO);
 	free(path);
 	free_array(paths);
-	return 0;
-}
-
-void free_list(t_node **head)
-{
-	t_node *tmp;
-
-	while (*head)
-	{
-		tmp = *head;
-		*head = (*head)->next;
-		if(tmp->args)
-			free_array(tmp->args);
-		free(tmp);
-	}
-	printf("free_list\n");
-}
-
-void free_triple(char ***triple)
-{
-	int i;
-	int j;
-
-	i = 0;
-	if(!triple)
-		return ;
-	while (triple[i])
-	{
-		j = 0;
-		while (triple[i][j])
-		{
-			free(triple[i][j]);
-			j++;
-		}
-		free(triple[i]);
-		i++;
-	}
-	free(triple);
-}
-
-t_history	*create_node_history(char *line)
-{
-	t_history *node;
-
-	node = (t_history *)malloc(sizeof(t_history));
-	node->line = ft_strdup(line);
-	node->next = NULL;
-
-	return (node);
-}
-
-
-void	ft_add_history(char *line, t_history **history)
-{
-	t_history *tmp;
-	t_history *new;
-
-	tmp = *history;
-	new = create_node_history(line);
-	if(!tmp)
-	{
-		*history = new;
-		return ;
-	}
-	while(tmp->next)
-		tmp = tmp->next;
-	tmp->next = new;
-}
-
-char *ft_history_get(t_history **history, int index)
-{
-	t_history *tmp;
-	int i;
-
-	i = 0;
-	tmp = *history;
-	while (tmp)
-	{
-		if (i == index)
-			return (tmp->line);
-		i++;
-		tmp = tmp->next;
-	}
-	return (NULL);
-}
-
-void ctrl_c_handler(int signum) {
-	(void)signum;
-	printf("\n");  // Print a new line
-	// Display a new prompt
-}
-
-static void	ctrlc(int s)
-{
-	if (s == 2)
-	{
-		write(1, "\n", 1);
-		rl_on_new_line();
-		rl_replace_line("", 0);
-		rl_redisplay();
-	}
-}
-
-void	sig_handler(void)
-{
-	//Ultima cena foi aqui
-	signal(SIGINT, &ctrlc);
-	signal(SIGQUIT, SIG_IGN);
+	return ;
 }
 
 int main(int argc, char **argv, char **envp)
@@ -613,10 +481,17 @@ int main(int argc, char **argv, char **envp)
 		line = NULL;
 		sig_handler();
 		line = readline("minishell$ ");
-        if(line != NULL)
+		if(!line)
+		{
+			free(line);
+			exit(0);
+		}
+        if(line != NULL && ft_strlen(line) > 0)
         {
 			add_history(line);
 			cmds = store_cmds(line);
+			if(!cmds)
+				continue ;
 //            print_array(cmds[0]);
             headmaster = create_list(cmds, headmaster);
 			print_list(&headmaster);

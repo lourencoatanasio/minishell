@@ -1,4 +1,4 @@
-SRCS		=		main.c
+SRCS		=		main.c signals.c frees.c
 
 OBJS 		=		$(addprefix objs/,$(SRCS:.c=.o))
 

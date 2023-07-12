@@ -26,12 +26,6 @@ typedef struct s_node
 	struct s_node	*next;
 }		t_node;
 
-typedef struct s_history
-{
-	char *line;
-	struct s_history *next;
-}		t_history;
-
 void print_array(char **array);
 void print_triple(char ***array);
 int ft_strlen(char *str);
@@ -44,6 +38,8 @@ char *ft_strjoin(char *s1, char *s2);
 char *ft_strdup(char *str);
 char *find_path(char **paths, char *cmd);
 void free_array(char **array);
+void free_list(t_node **head);
+void free_triple(char ***triple);
 char *ft_trim(char *str, char *set);
 char ***store_cmds(char *line);
 void add_node(t_node **head, t_node *node);
@@ -52,5 +48,6 @@ t_node *create_node(char **args);
 t_node *create_list(char ***cmds, t_node *head);
 void print_list(t_node **head);
 void child_one(char **envp, char **cmd, char *path);
+void	sig_handler(void);
 
 #endif //MINISHELL_H
