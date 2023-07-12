@@ -34,7 +34,6 @@ void free_list(t_node **head)
 			free_array(tmp->args);
 		free(tmp);
 	}
-	printf("free_list\n");
 }
 
 void	free_array(char **array)

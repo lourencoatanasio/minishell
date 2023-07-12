@@ -223,7 +223,9 @@ char	*find_path(char **paths, char *cmd)
 	int		i;
 	char	*path;
 	char	*aux;
-
+//	last thing here running direct path
+	if (access(cmd, F_OK) == 0)
+		return (cmd);
 	i = 0;
 	aux = paths[0];
 	paths[0] = ft_strdup(aux + 5);
@@ -234,10 +236,7 @@ char	*find_path(char **paths, char *cmd)
 		path = ft_strjoin(aux, cmd);
 		free(aux);
 		if (access(path, F_OK) == 0)
-		{
-			printf("path = %s\n", path);
 			return (path);
-		}
 		free(path);
 		i++;
 	}
@@ -324,7 +323,6 @@ t_node	*create_node_cmd(char **args)
 
 	i = 0;
     node = (t_node *)malloc(sizeof(t_node));
-    printf("sizeof_array = %d\n", sizeof_array(args));
 	node->args = (char **)malloc(sizeof(char *) * sizeof_array(args));
     node->cmd = ft_strdup(args[0]);
 	if(sizeof_array(args) > 1)
@@ -334,7 +332,6 @@ t_node	*create_node_cmd(char **args)
 			node->args[i] = ft_strdup(args[i]);
 			i++;
 		}
-		printf("check node\n");
 		node->args[i] = NULL;
 	}
 	else
@@ -409,8 +406,8 @@ void child_one(char **envp, char **cmd, char *path)
 		close(fd[1]);
 		dup2(fd[0], STDIN_FILENO);
 		close(fd[0]);  // Close the duplicated file descriptor
-		printf("parent\n");
 	}
+	wait(NULL);
 }
 
 int	node_count(t_node **head)
@@ -455,7 +452,6 @@ void pipex(char **envp, t_node **head)
 
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
-	print_array(cmd);
 	dup2(stdout, STDOUT_FILENO);
 	if(fork() == 0)
 		execve(path, cmd, envp);
@@ -494,10 +490,8 @@ int main(int argc, char **argv, char **envp)
 				continue ;
 //            print_array(cmds[0]);
             headmaster = create_list(cmds, headmaster);
-			print_list(&headmaster);
             pipex(envp, &headmaster);
 			free_list(&headmaster);
-			print_triple(cmds);
             free_triple(cmds);
             free(line);
         }
