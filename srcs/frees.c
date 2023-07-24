@@ -30,8 +30,10 @@ void free_list(t_node **head)
 	{
 		tmp = *head;
 		*head = (*head)->next;
-		if(tmp->args)
-			free_array(tmp->args);
+        if(tmp->cmd)
+            free(tmp->cmd);
+        if(tmp->args)
+            free_array(tmp->args);
 		free(tmp);
 	}
 }

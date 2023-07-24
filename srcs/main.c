@@ -323,20 +323,25 @@ t_node	*create_node_cmd(char **args)
 
 	i = 0;
     node = (t_node *)malloc(sizeof(t_node));
-	node->args = (char **)malloc(sizeof(char *) * sizeof_array(args));
+	node->args = (char **)malloc(sizeof(char *) * (sizeof_array(args) + 1));
     node->cmd = ft_strdup(args[0]);
 	if(sizeof_array(args) > 1)
 	{
 		while(args[i])
 		{
 			node->args[i] = ft_strdup(args[i]);
-			i++;
+            printf("====================================\n");
+            printf("args[%d] = %s\n", i, args[i]);
+            printf("====================================\n");
+            i++;
 		}
 		node->args[i] = NULL;
 	}
 	else
 	{
-		node->args[0] = node->cmd;
+        node->args[0] = NULL;
+        free(node->args[0]);
+		node->args[0] = ft_strdup(node->cmd);
 		node->args[1] = NULL;
 	}
     node->input = 0;
@@ -360,6 +365,7 @@ t_node *create_list(char ***cmds, t_node *head)
 		add_node(&head, create_node_cmd(cmds[i]));
 		i++;
 	}
+    printf("i = %d\n", i);
 	return head;
 }
 
@@ -462,15 +468,210 @@ void pipex(char **envp, t_node **head)
 	return ;
 }
 
+char **copy_env(char **envp)
+{
+    char **envcpy;
+    int i;
+
+    i = 0;
+    while(envp[i])
+        i++;
+    envcpy = (char **)malloc(sizeof(char *) * (i + 1));
+    i = 0;
+    while(envp[i])
+    {
+        envcpy[i] = ft_strdup(envp[i]);
+        i++;
+    }
+    envcpy[i] = NULL;
+    return envcpy;
+}
+
+int ft_strncmp(char *s1, char *s2, int n)
+{
+    int i;
+
+    i = 0;
+    while(s1[i] && s2[i] && i < n)
+    {
+        if(s1[i] != s2[i])
+            return (s1[i] - s2[i]);
+        i++;
+    }
+    if(i == n)
+        return 0;
+    return (s1[i] - s2[i]);
+}
+
+char *get_env(int i, char **envcpy)
+{
+    int n;
+    int c;
+    int tmp;
+    char *env;
+
+    n = 0;
+    c = 0;
+    while(envcpy[i][n] != '=')
+        n++;
+    tmp = n + 1;
+    while(envcpy[i][n])
+    {
+        c++;
+        n++;
+    }
+    env = (char *)malloc(sizeof(char) * (c + 1));
+    c = 0;
+    while(envcpy[i][tmp] != '\0')
+    {
+        env[c] = envcpy[i][tmp];
+        tmp++;
+        c++;
+    }
+    env[c] = '\0';
+    return env;
+}
+
+int find_env_line(char *env, char **envcpy)
+{
+    int i;
+    int n;
+
+    i = 0;
+    while(envcpy[i])
+    {
+        n = 0;
+        while(envcpy[i][n] != '=')
+            n++;
+        if(ft_strncmp(envcpy[i], env, n) == 0)
+            return i;
+        i++;
+    }
+    return -1;
+}
+
+char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
+{
+    size_t i;
+
+    i = 0;
+    if (dstsize == 0)
+        return (dst);
+    while (src[i] && i < dstsize - 1)
+    {
+        dst[i] = src[i];
+        i++;
+    }
+    dst[i] = '\0';
+    return (dst);
+}
+
+char** cutString(char *str, int position)
+{
+    char** result = (char**)malloc(sizeof(char*) * 2);
+    result[0] = (char*)malloc(sizeof(char) * (position + 1));
+    result[1] = (char*)malloc(sizeof(char) * (ft_strlen(str) - position + 1));
+    ft_strlcpy(result[0], str, position + 1);
+    ft_strlcpy(result[1], str + position + 1, ft_strlen(str) - position + 1);
+    return result;
+}
+
+char *get_name_env(int i, char **envcpy)
+{
+    int n;
+    char *env;
+
+    n = 0;
+    while(envcpy[i][n] != '=')
+        n++;
+    env = (char *)malloc(sizeof(char) * (n + 1));
+    n = 0;
+    while(envcpy[i][n] != '=')
+    {
+        env[n] = envcpy[i][n];
+        n++;
+    }
+    env[n] = '\0';
+    return env;
+}
+
+char *cut_name(char *str, char *name)
+{
+    int i;
+    int n;
+
+    i = 0;
+    n = 0;
+    printf("check\n");
+    while(str[i] == name[n])
+    {
+        i++;
+        n++;
+    }
+    return (str + i);
+}
+
+char ***handle_dollar(char ***cmds, char **envcpy)
+{
+    int i;
+    int n;
+    int c;
+    char **halves;
+    char *name;
+
+    i = 0;
+    c = 0;
+    while(cmds[i])
+    {
+        n = 0;
+        while(cmds[i][n])
+        {
+            printf("checking for $ in %s\n", cmds[i][n]);
+            while(cmds[i][n][c])
+            {
+                if(cmds[i][n][c] == '$')
+                {
+                    halves = cutString(cmds[i][n], c);
+                    printf("halves[0] = %s\n", halves[0]);
+                    printf("halves[1] = %s\n", halves[1]);
+                    if(find_env_line(halves[1], envcpy) != -1)
+                    {
+                        printf("found env\n");
+                        cmds[i][n] = ft_strjoin(halves[0], get_env(find_env_line(halves[1], envcpy), envcpy));
+                    }
+                    else
+                    {
+                        printf("env not found\n");
+                        cmds[i][n] = ft_strjoin(halves[0], "");
+                    }
+                    name = get_name_env(find_env_line(halves[1], envcpy), envcpy);
+                    printf("name = %s\n", name);
+                    printf("halves[1] after = %s\n", halves[1]);
+                    halves[1] = cut_name(halves[1], name); //Não fica com o segundo $ por isso não é recursivo
+                    cmds[i][n] = ft_strjoin(cmds[i][n], halves[1]);
+                }
+                c++;
+                printf("c = %d\n", c);
+            }
+            c = 0;
+            n++;
+        }
+        i++;
+    }
+    return cmds;
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
 	char ***cmds;
+    char **envcpy;
     t_node *headmaster;
 
 	(void )argc;
 	(void )argv;
-	while(1)
+    envcpy = copy_env(envp); //not freed
+    while(1)
 	{
 		cmds = NULL;
 		headmaster = NULL;
@@ -486,11 +687,13 @@ int main(int argc, char **argv, char **envp)
         {
 			add_history(line);
 			cmds = store_cmds(line);
+            cmds = handle_dollar(cmds, envcpy);
+            print_triple(cmds);
 			if(!cmds)
 				continue ;
-//            print_array(cmds[0]);
+            print_triple(cmds);
             headmaster = create_list(cmds, headmaster);
-            pipex(envp, &headmaster);
+            pipex(envcpy, &headmaster);
 			free_list(&headmaster);
             free_triple(cmds);
             free(line);
