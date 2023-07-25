@@ -180,26 +180,24 @@ char **get_paths(char **envp)
 
 char *ft_strjoin(char *s1, char *s2)
 {
-	int i;
-	int j;
-	char *str;
+    int i;
+    int j;
+    char *str;
 
-	i = 0;
-	j = 0;
-	str = malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
-	while (s1[i])
-	{
-		str[i] = s1[i];
-		i++;
-	}
-	while (s2[j])
-	{
-		str[i] = s2[j];
-		i++;
-		j++;
-	}
-	str[i] = '\0';
-	return str;
+    i = 0;
+    j = 0;
+    if(!s2)
+        return (s1);
+    str = malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
+    if (!str)
+        return (NULL);
+    while (s1[i])
+        str[j++] = s1[i++];
+    i = 0;
+    while (s2[i])
+        str[j++] = s2[i++];
+    str[j] = '\0';
+    return (str);
 }
 
 char *ft_strdup(char *str)
@@ -503,53 +501,6 @@ int ft_strncmp(char *s1, char *s2, int n)
     return (s1[i] - s2[i]);
 }
 
-char *get_env(int i, char **envcpy)
-{
-    int n;
-    int c;
-    int tmp;
-    char *env;
-
-    n = 0;
-    c = 0;
-    while(envcpy[i][n] != '=')
-        n++;
-    tmp = n + 1;
-    while(envcpy[i][n])
-    {
-        c++;
-        n++;
-    }
-    env = (char *)malloc(sizeof(char) * (c + 1));
-    c = 0;
-    while(envcpy[i][tmp] != '\0')
-    {
-        env[c] = envcpy[i][tmp];
-        tmp++;
-        c++;
-    }
-    env[c] = '\0';
-    return env;
-}
-
-int find_env_line(char *env, char **envcpy)
-{
-    int i;
-    int n;
-
-    i = 0;
-    while(envcpy[i])
-    {
-        n = 0;
-        while(envcpy[i][n] != '=')
-            n++;
-        if(ft_strncmp(envcpy[i], env, n) == 0)
-            return i;
-        i++;
-    }
-    return -1;
-}
-
 char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
 {
     size_t i;
@@ -564,101 +515,6 @@ char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
     }
     dst[i] = '\0';
     return (dst);
-}
-
-char** cutString(char *str, int position)
-{
-    char** result = (char**)malloc(sizeof(char*) * 2);
-    result[0] = (char*)malloc(sizeof(char) * (position + 1));
-    result[1] = (char*)malloc(sizeof(char) * (ft_strlen(str) - position + 1));
-    ft_strlcpy(result[0], str, position + 1);
-    ft_strlcpy(result[1], str + position + 1, ft_strlen(str) - position + 1);
-    return result;
-}
-
-char *get_name_env(int i, char **envcpy)
-{
-    int n;
-    char *env;
-
-    n = 0;
-    while(envcpy[i][n] != '=')
-        n++;
-    env = (char *)malloc(sizeof(char) * (n + 1));
-    n = 0;
-    while(envcpy[i][n] != '=')
-    {
-        env[n] = envcpy[i][n];
-        n++;
-    }
-    env[n] = '\0';
-    return env;
-}
-
-char *cut_name(char *str, char *name)
-{
-    int i;
-    int n;
-
-    i = 0;
-    n = 0;
-    printf("check\n");
-    while(str[i] == name[n])
-    {
-        i++;
-        n++;
-    }
-    return (str + i);
-}
-
-char ***handle_dollar(char ***cmds, char **envcpy)
-{
-    int i;
-    int n;
-    int c;
-    char **halves;
-    char *name;
-
-    i = 0;
-    c = 0;
-    while(cmds[i])
-    {
-        n = 0;
-        while(cmds[i][n])
-        {
-            printf("checking for $ in %s\n", cmds[i][n]);
-            while(cmds[i][n][c])
-            {
-                if(cmds[i][n][c] == '$')
-                {
-                    halves = cutString(cmds[i][n], c);
-                    printf("halves[0] = %s\n", halves[0]);
-                    printf("halves[1] = %s\n", halves[1]);
-                    if(find_env_line(halves[1], envcpy) != -1)
-                    {
-                        printf("found env\n");
-                        cmds[i][n] = ft_strjoin(halves[0], get_env(find_env_line(halves[1], envcpy), envcpy));
-                    }
-                    else
-                    {
-                        printf("env not found\n");
-                        cmds[i][n] = ft_strjoin(halves[0], "");
-                    }
-                    name = get_name_env(find_env_line(halves[1], envcpy), envcpy);
-                    printf("name = %s\n", name);
-                    printf("halves[1] after = %s\n", halves[1]);
-                    halves[1] = cut_name(halves[1], name); //Não fica com o segundo $ por isso não é recursivo
-                    cmds[i][n] = ft_strjoin(cmds[i][n], halves[1]);
-                }
-                c++;
-                printf("c = %d\n", c);
-            }
-            c = 0;
-            n++;
-        }
-        i++;
-    }
-    return cmds;
 }
 
 int main(int argc, char **argv, char **envp)

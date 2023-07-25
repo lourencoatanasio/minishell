@@ -49,5 +49,15 @@ t_node *create_list(char ***cmds, t_node *head);
 void print_list(t_node **head);
 void child_one(char **envp, char **cmd, char *path);
 void	sig_handler(void);
+char **cutString(char *str, int position);
+char *get_name_env(int i, char **envcpy);
+char *cut_name(char *str, char *name);
+char ***handle_dollar(char ***cmds, char **envcpy);
+char *get_env(int i, char **envcpy);
+int find_env_line(char *env, char **envcpy);
+char **copy_env(char **envp);
+int ft_strncmp(char *s1, char *s2, int n);
+char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize);
+
 
 #endif //MINISHELL_H
