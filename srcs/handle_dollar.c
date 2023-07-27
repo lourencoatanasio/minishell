@@ -48,7 +48,11 @@ char *cut_name(char *str, char *name)
             return NULL;
         }
         else
+        {
+            result = (char *)malloc(sizeof(char) * (ft_strlen(str) - i + 1));
+            result = ft_strlcpy(result, str + i, ft_strlen(str) - i + 1);
             return (str + i);
+        }
     }
     while(str[i] == name[n] && str[i] != '\0' && name[n] != '\0')
     {
@@ -61,93 +65,75 @@ char *cut_name(char *str, char *name)
     return (result);
 }
 
-char ***handle_dollar(char ***cmds, char **envcpy)
+char *get_env_val(int i, char **envcpy)
+{
+    int n;
+    int j;
+    char *env;
+
+    if(i == -1)
+        return NULL;
+    n = 0;
+    j = 0;
+    while(envcpy[i][n] != '=')
+        n++;
+    env = (char *)malloc(sizeof(char) * (ft_strlen(envcpy[i]) - n + 1));
+    n++;
+    printf("n = %d\n", n);
+    while(envcpy[i][n] != '\0')
+    {
+        env[j] = envcpy[i][n];
+        printf("env[%d] = %c\n", n - 1, env[j]);
+        n++;
+        j++;
+    }
+    env[j] = '\0';
+    printf("env = %s\n", env);
+    return env;
+}
+
+char *ft_getenv(char *name, char **envcpy)
+{
+    int i;
+    char *env;
+
+    printf("ft_getenv\n");
+    i = find_env_line(name, envcpy);
+    env = get_env_val(i, envcpy);
+    return env;
+}
+
+void handle_dollar(t_node **head, char **envcpy)
 {
     int i;
     int n;
-    int c;
+    t_node *tmp;
     char **halves;
-    char *name;
     char *env;
-    char *tmp;
+    char *str;
 
-    i = 0;
-    c = 0;
-    while(cmds[i])
+    tmp = *head;
+    printf("handle_dollar\n");
+    while(tmp)
     {
-        n = 0;
-        while(cmds[i][n])
+        i = 0;
+        while(tmp->args[i])
         {
-            while(cmds[i][n][c])
+            n = 0;
+            while(tmp->args[i][n])
             {
-                if(cmds[i][n][c] == '$')
+                if(tmp->args[i][n] == '$')
                 {
-                    halves = cutString(cmds[i][n], c);
-                    printf("check env\n");
-                    if(find_env_line(halves[1], envcpy) != -1)
-                    {
-                        env = get_env(find_env_line(halves[1], envcpy), envcpy);
-                        tmp = ft_strjoin(halves[0], env);
-                    }
-                    else
-                        cmds[i][n] = ft_strjoin(halves[0], "");
-                    printf("halves [0] = %s\n", halves[0]);
-                    name = get_name_env(find_env_line(halves[1], envcpy), envcpy);
-                    halves[1] = cut_name(halves[1], name);
-                    free(cmds[i][n]);
-                    printf("before strjoin\n");
-                    cmds[i][n] = ft_strjoin(tmp, halves[1]);
-                    printf("after strjoin\n");
-                    free(tmp);
-                    free(name);
-                    free(env);
-                    if(halves[0])
-                        free(halves[0]);
-                    if(halves[1])
-                        free(halves[1]);
-                    free(halves);
+                    halves = cutString(tmp->args[i], n);
+                    env = ft_getenv(halves[1], envcpy);
                 }
-                c++;
+                n++;
             }
-            c = 0;
-            n++;
+            i++;
         }
-        i++;
+        tmp = tmp->next;
     }
-    printf("print triple\n");
-    print_triple(cmds);
-    return cmds;
-}
-
-char *get_env(int i, char **envcpy)
-{
-    int n;
-    int c;
-    int tmp;
-    char *env;
-
-    n = 0;
-    c = 0;
-    if(i == -1)
-        return (" ");
-    while(envcpy[i][n] != '=')
-        n++;
-    tmp = n + 1;
-    while(envcpy[i][n])
-    {
-        c++;
-        n++;
-    }
-    env = (char *)malloc(sizeof(char) * (c + 1));
-    c = 0;
-    while(envcpy[i][tmp] != '\0')
-    {
-        env[c] = envcpy[i][tmp];
-        tmp++;
-        c++;
-    }
-    env[c] = '\0';
-    return env;
+    printf("handle_dollar end\n");
 }
 
 int ft_strfcmp(char *s1, char *s2)
@@ -155,7 +141,7 @@ int ft_strfcmp(char *s1, char *s2)
     int i;
 
     i = 0;
-    while(s1[i] && s2[i])
+    while(s1[i] && s2[i] && s1[i] != '=' && s2[i] != '$')
     {
         if(s1[i] != s2[i])
             return 1;

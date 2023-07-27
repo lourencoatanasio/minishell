@@ -52,7 +52,7 @@ void	sig_handler(void);
 char **cutString(char *str, int position);
 char *get_name_env(int i, char **envcpy);
 char *cut_name(char *str, char *name);
-char ***handle_dollar(char ***cmds, char **envcpy);
+void handle_dollar(t_node **head, char **envcpy);
 char *get_env(int i, char **envcpy);
 int find_env_line(char *env, char **envcpy);
 char **copy_env(char **envp);

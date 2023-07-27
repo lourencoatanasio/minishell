@@ -543,12 +543,12 @@ int main(int argc, char **argv, char **envp)
         {
 			add_history(line);
 			cmds = store_cmds(line);
-            cmds = handle_dollar(cmds, envcpy);
             print_triple(cmds);
 			if(!cmds)
 				continue ;
             print_triple(cmds);
             headmaster = create_list(cmds, headmaster);
+            handle_dollar(&headmaster, envcpy);
             pipex(envcpy, &headmaster);
 			free_list(&headmaster);
             free_triple(cmds);
