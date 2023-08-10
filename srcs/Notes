@@ -1,0 +1,5 @@
+Fica com um espaço antes do ola
+echo $HOM ola
+
+
+Fica com "um espaço | antes" do ola

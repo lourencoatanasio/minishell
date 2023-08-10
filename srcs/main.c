@@ -1,28 +1,5 @@
 #include "../minishell.h"
 
-int ft_atoi(char *str)
-{
-	int i;
-	int sign;
-	int num;
-
-	i = 0;
-	sign = 1;
-	num = 0;
-	while (str[i] && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' ||
-				str[i] == '\v' || str[i] == '\f' || str[i] == '\r'))
-		i++;
-	if (str[i] && (str[i] == '-' || str[i] == '+'))
-	{
-		if (str[i] == '-')
-			sign *= -1;
-		i++;
-	}
-	while (str[i] && (str[i] >= '0' && str[i] <= '9'))
-		num = num * 10 + (str[i++] - '0');
-	return (num * sign);
-}
-
 void	print_array(char **array)
 {
 	int i;
@@ -30,7 +7,7 @@ void	print_array(char **array)
 	i = 0;
 	while (array[i])
 	{
-        printf("=======================\narray check\n");
+        printf("=======================\n");
 		printf("array[%d] = %s\n", i, array[i]);
 		i++;
 	}
@@ -56,109 +33,6 @@ void print_triple(char ***array)
 	}
 }
 
-int ft_strlen(char *str)
-{
-	int i;
-
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
-}
-
-int	get_num_words(char *str, char c)
-{
-    int	i;
-    int	words;
-
-    i = 0;
-    words = 0;
-	if(!str)
-		return (0);
-    while (str[i] && str[i] == c)
-        i++;
-    while (str[i])
-    {
-        words++;
-        while (str[i] && str[i] != c)
-            i++;
-        while (str[i] && str[i] == c)
-            i++;
-    }
-    return (words);
-}
-
-char	*get_word(char *str, char c)
-{
-    int		i;
-    int		len;
-    char	*word;
-
-    i = 0;
-    while (str[i] && str[i] != c)
-        i++;
-    len = i;
-    word = malloc(sizeof(char) * len + 1);
-    i = 0;
-    while (i < len)
-    {
-        word[i] = str[i];
-        i++;
-    }
-    word[i] = '\0';
-    return (word);
-}
-
-char	**ft_split(char *str, char c)
-{
-    int		i;
-    int		words;
-    char	**array;
-
-    i = 0;
-    words = get_num_words(str, c);
-	if(words == 0)
-		return (NULL);
-    array = malloc(sizeof(char *) * words + 10);
-    if (!array)
-        return (NULL);
-    while (*str && *str == c)
-        str++;
-    while (*str)
-    {
-        array[i] = get_word(str, c);
-        while (*str && *str != c)
-            str++;
-        while (*str && *str == c)
-            str++;
-        i++;
-    }
-    array[i] = (char *) NULL;
-    return (array);
-}
-
-char	*ft_strnstr(const char *big, const char *little)
-{
-    size_t	i;
-    size_t	j;
-
-    i = 0;
-    if (*little == '\0')
-        return ((char *)big);
-    while (big[i])
-    {
-        j = 0;
-        while (little[j] == big[j + i])
-        {
-            j++;
-            if (little[j] == '\0')
-                return ((char *)(big + i));
-        }
-        i++;
-    }
-    return (NULL);
-}
-
 char **get_paths(char **envp)
 {
     char *aux;
@@ -178,50 +52,12 @@ char **get_paths(char **envp)
     return NULL;
 }
 
-char *ft_strjoin(char *s1, char *s2)
-{
-    int i;
-    int j;
-    char *str;
-
-    i = 0;
-    j = 0;
-    if(!s2)
-        return (s1);
-    str = malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
-    if (!str)
-        return (NULL);
-    while (s1[i])
-        str[j++] = s1[i++];
-    i = 0;
-    while (s2[i])
-        str[j++] = s2[i++];
-    str[j] = '\0';
-    return (str);
-}
-
-char *ft_strdup(char *str)
-{
-	int i;
-	char *dup;
-
-	i = 0;
-	dup = malloc(sizeof(char) * ft_strlen(str) + 1);
-	while (str[i])
-	{
-		dup[i] = str[i];
-		i++;
-	}
-	dup[i] = '\0';
-	return dup;
-}
-
 char	*find_path(char **paths, char *cmd)
 {
 	int		i;
 	char	*path;
 	char	*aux;
-//	last thing here running direct path
+
 	if (access(cmd, F_OK) == 0)
 		return (cmd);
 	i = 0;
@@ -264,27 +100,80 @@ char *ft_trim(char *str, char *set)
 	return trim;
 }
 
+char *get_quotes(char *str)
+{
+	int i;
+	char *quotes;
+
+	i = 0;
+	quotes = malloc(sizeof(char) * ft_strlen(str) + 10);
+	while (str[i])
+	{
+		quotes[i] = '0';
+		if (str[i] == '\'')
+		{
+			quotes[i] = '3';
+			i++;
+			while (str[i] != '\'' && str[i] != '\0')
+			{
+				quotes[i] = '1';
+				i++;
+			}
+			if (str[i] == '\0')
+			{
+				printf("Error: unclosed quotes\n");
+				return (NULL);
+			}
+			else
+				quotes[i] = '3';
+		}
+		if (str[i] == '\"')
+		{
+			quotes[i] = '3';
+			i++;
+			while (str[i] != '\"' && str[i] != '\0')
+			{
+				quotes[i] = '2';
+				i++;
+			}
+			if (str[i] == '\0')
+			{
+				printf("Error: unclosed quotes\n");
+				return (NULL);
+			}
+			else
+				quotes[i] = '3';
+		}
+		i++;
+	}
+	quotes[i] = '\0';
+	printf("quotes = %s\n", quotes);
+	return quotes;
+}
+
 char ***store_cmds(char *line)
 {
 	char ***cmds;
 	char **aux;
+	char *quotes;
 	int i;
 
 	i = 0;
 	if(!line)
 		return (NULL);
-	cmds = malloc(sizeof(char **) * 10);
-	aux = ft_split(line, '|');
-	if(!aux) {
-		free(cmds);
+	quotes = get_quotes(line);
+	aux = ft_split_quote(line, quotes, '|');
+	print_array(aux);
+	if(!aux)
 		return (NULL);
-	}
+	cmds = malloc(sizeof(char **) * (sizeof_array(aux) + 1));
 	while (aux[i])
 	{
-		cmds[i] = ft_split(aux[i], ' ');
+		cmds[i] = ft_split_quote(aux[i], quotes, ' ');
 		i++;
 	}
 	cmds[i] = NULL;
+	free(quotes);
 	free_array(aux);
 	return cmds;
 }
@@ -314,6 +203,30 @@ int sizeof_array(char **array)
 	return i;
 }
 
+char* removeCharAtIndex(char* str, int index)
+{
+	char *result;
+	int len;
+	int i;
+	int j;
+
+	if (str == NULL || index < 0 || index >= ft_strlen(str))
+		return (str);
+	len = ft_strlen(str);
+	result = (char*)malloc(len);
+	i = 0;
+	j = 0;
+	while (str[i] != '\0')
+	{
+		if (i != index)
+			result[j++] = str[i];
+		i++;
+	}
+	result[j] = '\0';
+	free(str);
+	return result;
+}
+
 t_node	*create_node_cmd(char **args)
 {
     t_node	*node;
@@ -322,24 +235,29 @@ t_node	*create_node_cmd(char **args)
 	i = 0;
     node = (t_node *)malloc(sizeof(t_node));
 	node->args = (char **)malloc(sizeof(char *) * (sizeof_array(args) + 1));
+	node->quotes = (char **)malloc(sizeof(char *) * (sizeof_array(args) + 1));
     node->cmd = ft_strdup(args[0]);
 	if(sizeof_array(args) > 1)
 	{
 		while(args[i])
 		{
 			node->args[i] = ft_strdup(args[i]);
+			node->quotes[i] = get_quotes(node->args[i]);
             printf("====================================\n");
             printf("args[%d] = %s\n", i, args[i]);
             printf("====================================\n");
             i++;
 		}
 		node->args[i] = NULL;
+		node->quotes[i] = NULL;
 	}
 	else
 	{
         node->args[0] = NULL;
         free(node->args[0]);
 		node->args[0] = ft_strdup(node->cmd);
+		node->quotes[0] = get_quotes(node->args[0]);
+		node->quotes[1] = NULL;
 		node->args[1] = NULL;
 	}
     node->input = 0;
@@ -348,6 +266,35 @@ t_node	*create_node_cmd(char **args)
     node->here_doc = 0;
     node->next = NULL;
     return (node);
+}
+
+void	handle_quotes(t_node **head)
+{
+	t_node	*tmp;
+	int		i;
+	int		j;
+
+	tmp = *head;
+	while (tmp != NULL)
+	{
+		i = 0;
+		while (tmp->args[i])
+		{
+			j = 0;
+			while (tmp->args[i][j])
+			{
+				if (tmp->quotes[i][j] == '3')
+				{
+					tmp->args[i] = removeCharAtIndex(tmp->args[i], j);
+					tmp->quotes[i] = removeCharAtIndex(tmp->quotes[i], j);
+					j--;
+				}
+				j++;
+			}
+			i++;
+		}
+		tmp = tmp->next;
+	}
 }
 
 t_node *create_list(char ***cmds, t_node *head)
@@ -379,15 +326,52 @@ void    print_list(t_node **head)
         printf("print_list_cmd = %s\n", tmp->cmd);
         while (tmp->args[i])
         {
+			printf("print_list_quote %d = %s\n", i, tmp->quotes[i]);
             printf("print_list_args %d = %s\n", i, tmp->args[i]);
             i++;
         }
-		printf("tmp = %p\n", tmp);
         tmp = tmp->next;
     }
 }
 
-void child_one(char **envp, char **cmd, char *path)
+int	is_builtin(char *str)
+{
+	if (!str)
+		return (0);
+	if (ft_strncmp(str, "echo", 5) == 0)
+		return (1);
+	if (ft_strncmp(str, "cd", 3) == 0)
+		return (1);
+	if (ft_strncmp(str, "pwd", 4) == 0)
+		return (1);
+	if (ft_strncmp(str, "export", 7) == 0)
+		return (1);
+	if (ft_strncmp(str, "unset", 6) == 0)
+		return (1);
+	if (ft_strncmp(str, "env", 4) == 0)
+		return (1);
+	return (0);
+}
+
+void	builtin(char **envpcpy, char **cmd, t_node **head)
+{
+	printf("cmd[0] = %s\n", cmd[0]);
+	printf("ft_strncmp(cmd[0], export, 7) = %d\n", ft_strncmp(cmd[0], "export", 7));
+	if (ft_strncmp(cmd[0], "echo", 5) == 0)
+		shell_echo(head);
+	else if (ft_strncmp(cmd[0], "cd", 3) == 0)
+		shell_cd(head, envpcpy);
+	else if (ft_strncmp(cmd[0], "pwd", 4) == 0)
+		shell_pwd(envpcpy);
+	else if (ft_strncmp(cmd[0], "export", 7) == 0)
+		shell_export(head, envpcpy);
+	else if (ft_strncmp(cmd[0], "unset", 6) == 0)
+		shell_unset(head, envpcpy);
+	else if (ft_strncmp(cmd[0], "env", 4) == 0)
+		shell_env(envpcpy);
+}
+
+void child_one(char **envp, char **cmd, char *path, t_node **head)
 {
 	int fd[2];
 	pid_t pid;
@@ -402,14 +386,16 @@ void child_one(char **envp, char **cmd, char *path)
 	{
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
-		close(fd[1]);  // Close the duplicated file descriptor
-		execve(path, cmd, envp);
+		if(is_builtin(cmd[0]) == 1)
+			builtin(envp, cmd, head);
+		else
+			execve(path, cmd, envp);
+		exit(0);
 	}
 	else
 	{
 		close(fd[1]);
 		dup2(fd[0], STDIN_FILENO);
-		close(fd[0]);  // Close the duplicated file descriptor
 	}
 	wait(NULL);
 }
@@ -429,7 +415,7 @@ int	node_count(t_node **head)
 	return i;
 }
 
-void pipex(char **envp, t_node **head)
+void pipex(char **envpcpy, t_node **head)
 {
 	char **paths;
 	char *path;
@@ -442,23 +428,26 @@ void pipex(char **envp, t_node **head)
 		return ;
 	stdout = dup(STDOUT_FILENO);
 	stdin = dup(STDIN_FILENO);
-	paths = get_paths(envp);
-
+	paths = get_paths(envpcpy);
 	tmp = *head;
 	while(node_count(head) >= 2 && tmp->next != NULL)
 	{
 		cmd = (*tmp).args;
 		path = find_path(paths, (*tmp).cmd);
-		child_one(envp, cmd, path);
+		child_one(envpcpy, cmd, path, &tmp);
 		free(path);
 		tmp = tmp->next;
 	}
-
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	dup2(stdout, STDOUT_FILENO);
 	if(fork() == 0)
-		execve(path, cmd, envp);
+	{
+		if(is_builtin(cmd[0]) == 1)
+			builtin(envpcpy, cmd, head);
+		else
+			execve(path, cmd, envpcpy);
+	}
 	wait(NULL);
 	dup2(stdin, STDIN_FILENO);
 	free(path);
@@ -483,38 +472,6 @@ char **copy_env(char **envp)
     }
     envcpy[i] = NULL;
     return envcpy;
-}
-
-int ft_strncmp(char *s1, char *s2, int n)
-{
-    int i;
-
-    i = 0;
-    while(s1[i] && s2[i] && i < n)
-    {
-        if(s1[i] != s2[i])
-            return (s1[i] - s2[i]);
-        i++;
-    }
-    if(i == n)
-        return 0;
-    return (s1[i] - s2[i]);
-}
-
-char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
-{
-    size_t i;
-
-    i = 0;
-    if (dstsize == 0)
-        return (dst);
-    while (src[i] && i < dstsize - 1)
-    {
-        dst[i] = src[i];
-        i++;
-    }
-    dst[i] = '\0';
-    return (dst);
 }
 
 int main(int argc, char **argv, char **envp)
@@ -548,13 +505,15 @@ int main(int argc, char **argv, char **envp)
 				continue ;
             print_triple(cmds);
             headmaster = create_list(cmds, headmaster);
+			handle_quotes(&headmaster);
+			printf("====================================\n");
+			print_list(&headmaster);
             handle_dollar(&headmaster, envcpy);
-            pipex(envcpy, &headmaster);
+			pipex(envcpy, &headmaster);
 			free_list(&headmaster);
             free_triple(cmds);
             free(line);
         }
 	}
-//	pipex(argc, argv, envp);
 	return 0;
 }

@@ -34,6 +34,8 @@ void free_list(t_node **head)
             free(tmp->cmd);
         if(tmp->args)
             free_array(tmp->args);
+		if(tmp->quotes)
+			free_array(tmp->quotes);
 		free(tmp);
 	}
 }
