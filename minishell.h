@@ -79,7 +79,9 @@ char* ft_strchr(const char* str, int ch);
 void	shell_export(t_node **node, char **envpcpy);
 
 int ft_strcmp(const char *s1, const char *s2);
-void	shell_cd(t_node **node, char **envpcpy);
+void	shell_cd(t_node **head, char **envpcpy);
+void	til(t_node **head, char **envpcpy);
+
 
 int ft_strfcmp(char *s1, char *s2);
 int	get_num_words_quote(char *str, char *quotes, char c);

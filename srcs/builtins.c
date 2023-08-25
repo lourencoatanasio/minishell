@@ -234,34 +234,70 @@ int ft_strcmp(const char *s1, const char *s2)
 	return (s1[i] - s2[i]);
 }
 
-void	shell_cd(t_node **node, char **envpcpy)
+void	til(t_node **head, char **envpcpy)
 {
-	char *cwd;
-	char *oldpwd; 
-	char *home;
-	char *path;
-
-	cwd = ft_getenv("PWD", envpcpy);
-	oldpwd = ft_getenv("OLDPWD", envpcpy);
-	home = ft_getenv("HOME", envpcpy);
-	if ((*node)->args[1] == NULL)
+	chdir(getenv("HOME"));
+	if (chdir((* head)->args[1] + 2) != 0)
 	{
-		chdir(home);
-		free(home);
-	}
-	else if (ft_strcmp((*node)->args[1], "-") == 0)
-	{
-		chdir(oldpwd);
-		free(oldpwd);
+		printf("minishell: %s: Invalid directory\n", (* head)->args[1]);
+//		write(mt->wcode, "1\n", 2);
 	}
 	else
 	{
-		path = ft_strjoin(cwd, "/");
-		path = ft_strjoin(path, (*node)->args[1]);
-		chdir(path);
-		free(path);
+		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
+		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+//		write(mt->wcode, "0\n", 2);
 	}
-	free(cwd);
+}
+
+void	shell_cd(t_node **head, char **envpcpy)
+{
+	if ((* head)->args && (* head)->args[1] && (* head)->args[2])
+	{
+		printf("amazingshell: cd: too many arguments\n");
+//		write(mt->wcode, "1\n", 2);
+	}
+	else if (!(* head)->args[1] || ft_strcmp((* head)->args[1], "~") == 0)
+	{
+		if (chdir(getenv("HOME")) != 0)
+		{
+			printf("amazingshell: cd: HOME not set\n");
+//			write(mt->wcode, "1\n", 2);
+		}
+		else
+		{
+			ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
+			ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+//			write(mt->wcode, "0\n", 2);
+		}
+	}
+	else if ((* head)->args[1][0] == '~' && (* head)->args[1][1] == '/')
+		til(head, envpcpy);
+	else if (ft_strcmp((* head)->args[1], "-") == 0)
+	{
+		if (chdir(getenv("OLDPWD")) != 0)
+		{
+			printf("minishell: cd: OLDPWD not set\n");
+//			write(mt->wcode, "1\n", 2);
+		}
+		else
+		{
+			ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
+			ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+//			write(mt->wcode, "0\n", 2);
+		}
+	}
+	else if (chdir((* head)->args[1]) != 0)
+	{
+		printf("minishell: %s: Invalid directory\n", (* head)->args[1]);
+//		write(mt->wcode, "1\n", 2);
+	}
+	else
+	{
+		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
+		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+//		write(mt->wcode, "0\n", 2);
+	}
 }
 
 void	shell_unset(t_node **node, char **envpcpy)
