@@ -227,7 +227,7 @@ char* removeCharAtIndex(char* str, int index)
 	return result;
 }
 
-t_node	*create_node_cmd(char **args)
+t_node	*create_node_cmd(char **args, int error)
 {
     t_node	*node;
 	int		i;
@@ -264,6 +264,7 @@ t_node	*create_node_cmd(char **args)
     node->output = 0;
     node->append = 0;
     node->here_doc = 0;
+    node->error = error;
     node->next = NULL;
     return (node);
 }
@@ -297,7 +298,7 @@ void	handle_quotes(t_node **head)
 	}
 }
 
-t_node *create_list(char ***cmds, t_node *head)
+t_node *create_list(char ***cmds, t_node *head, int error)
 {
 	int i;
 
@@ -307,7 +308,7 @@ t_node *create_list(char ***cmds, t_node *head)
 		return NULL;
 	while (cmds[i])
 	{
-		add_node(&head, create_node_cmd(cmds[i]));
+		add_node(&head, create_node_cmd(cmds[i], error));
 		i++;
 	}
     printf("i = %d\n", i);
@@ -355,8 +356,6 @@ int	is_builtin(char *str)
 
 void	builtin(char **envpcpy, char **cmd, t_node **head)
 {
-	printf("cmd[0] = %s\n", cmd[0]);
-	printf("ft_strncmp(cmd[0], export, 7) = %d\n", ft_strncmp(cmd[0], "export", 7));
 	if (ft_strncmp(cmd[0], "echo", 5) == 0)
 		shell_echo(head);
 	else if (ft_strncmp(cmd[0], "cd", 3) == 0)
@@ -386,17 +385,19 @@ void child_one(char **envp, char **cmd, char *path, t_node **head)
 	{
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
+        close(fd[1]);
 		if(is_builtin(cmd[0]) == 1)
 			builtin(envp, cmd, head);
 		else
 			execve(path, cmd, envp);
 		exit(0);
 	}
-	else
-	{
-		close(fd[1]);
-		dup2(fd[0], STDIN_FILENO);
-	}
+    else
+    {
+        close(fd[1]);
+        dup2(fd[0], STDIN_FILENO);
+        close(fd[0]);
+    }
 	wait(NULL);
 }
 
@@ -474,16 +475,37 @@ char **copy_env(char **envp)
     return envcpy;
 }
 
+int create_error_file()
+{
+    int file;
+    char *path;
+    char tmp[1024];
+
+    getcwd(tmp, sizeof(tmp));
+    path = ft_strjoin(tmp, "/.e");
+    file = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+    if (file == -1)
+    {
+        printf("Error creating error file\n");
+        exit(0);
+    }
+    free(path);
+    return file;
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
 	char ***cmds;
     char **envcpy;
+    int error;
+
     t_node *headmaster;
 
 	(void )argc;
 	(void )argv;
     envcpy = copy_env(envp); //not freed
+    error = create_error_file();
     while(1)
 	{
 		cmds = NULL;
@@ -491,10 +513,13 @@ int main(int argc, char **argv, char **envp)
 		line = NULL;
 		sig_handler();
 		line = readline("minishell$ ");
+        printf("line: %s\n", line);
 		if(!line)
 		{
+            printf("exit\n");
 			free(line);
-			exit(0);
+            free_array(envcpy);
+            exit(0);
 		}
         if(line != NULL && ft_strlen(line) > 0)
         {
@@ -504,7 +529,7 @@ int main(int argc, char **argv, char **envp)
 			if(!cmds)
 				continue ;
             print_triple(cmds);
-            headmaster = create_list(cmds, headmaster);
+            headmaster = create_list(cmds, headmaster, error);
 			handle_quotes(&headmaster);
 			printf("====================================\n");
 			print_list(&headmaster);

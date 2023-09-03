@@ -20,6 +20,7 @@ typedef struct s_node
 	char *cmd;
 	char **args;
 	char **quotes;
+    int error;
 	int input;
 	int output;
 	int append;
@@ -52,8 +53,8 @@ char *ft_trim(char *str, char *set);
 char ***store_cmds(char *line);
 void add_node(t_node **head, t_node *node);
 int sizeof_array(char **array);
-t_node *create_node(char **args);
-t_node *create_list(char ***cmds, t_node *head);
+t_node	*create_node_cmd(char **args, int error);
+t_node *create_list(char ***cmds, t_node *head, int error);
 void print_list(t_node **head);
 void child_one(char **envp, char **cmd, char *path, t_node **head);
 void	sig_handler(void);
@@ -90,6 +91,8 @@ char **ft_split_quote(char *str, char *quotes, char c);
 int	is_builtin(char *str);
 void	builtin(char **envpcpy, char **cmd, t_node **head);
 
+int ft_isalnum(int c);
+int ft_isalpha(int c);
 
 
 

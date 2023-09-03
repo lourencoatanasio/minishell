@@ -43,11 +43,11 @@ char *cut_name(char *str)
 	c = 0;
 	printf("cut_name\n");
 	printf("str = %s\n", str);
-	while(str[i] != '\0' && str[i] != '$')
-	{
-		i++;
-		n++;
-	}
+	while((str[i] != '\0' && str[i] != '$' && ft_isalnum(str[i]) == 0) || str[i] == '_')
+    {
+        i++;
+        n++;
+    }
 	if(str[i] == '\0')
 		return "";
 	while (str[i] != '\0')
@@ -123,10 +123,17 @@ void handle_dollar(t_node **head, char **envcpy)
 						break;
 					halves = cutString(tmp->args[i], n);
 					env = ft_getenv(halves[1], envcpy);
+                    printf("====================================\n");
+                    printf("halves[0] = %s\n", halves[0]);
+                    printf("halves[1] = %s\n", halves[1]);
 					if(env)
-						str = ft_strjoin(halves[0], env);
+                    {
+                        str = ft_strjoin(halves[0], env);
+                        printf("env\n");
+                    }
 					else
 						str = ft_strjoin(halves[0], "");
+                    printf("str = %s\n", str);
 					name = cut_name(halves[1]);
 					tmpstr = ft_strjoin(str, name);
 					free(tmp->args[i]);
@@ -148,50 +155,71 @@ void handle_dollar(t_node **head, char **envcpy)
 	}
 }
 
-int ft_strfcmp(char *s1, char *s2)
+int ft_strncmp(char *s1, char *s2, int n)
 {
-	int i;
-	int n;
-	int c;
+    int i;
 
-	i = 0;
-	n = 0;
-	c = 0;
-	while(s2[n] && s2[n] != '$')
-		n++;
-	while(s1[c] && s1[c] != '=')
-		c++;
-	if(c < n)
-	{
-		while(s1[i] && s2[i])
-		{
-			if(s1[i] != s2[i])
-				return 1;
-			i++;
-		}
-	}
-	else
-	{
-		while(s1[i] != '=' && s1[i] != '\0')
-		{
-			if(s1[i] != s2[i])
-				return 1;
-			i++;
-		}
-	}
-	return 0;
+    i = 0;
+    while(s1[i] && s2[i] && i < n)
+    {
+        if(s1[i] != s2[i])
+            return (s1[i] - s2[i]);
+        i++;
+    }
+    if(i == n)
+        return 0;
+    return (s1[i] - s2[i]);
+}
+
+int len_til_equal(char *str)
+{
+    int i;
+
+    i = 0;
+    while(str[i] != '=')
+        i++;
+    return i;
+}
+
+int ft_isalnum_dif(int c)
+{
+    if ((c >= '0' && c <= '9') || ft_isalpha(c) == 0 || c == '_')
+        return (0);
+    return (1);
+}
+
+int len_til_special(char *str)
+{
+    int i;
+
+    i = 0;
+    while(ft_isalnum_dif(str[i]) == 0)
+        i++;
+    return i;
 }
 
 int find_env_line(char *env, char **envcpy)
 {
 	int i;
+    int n;
+    int len;
 
 	i = 0;
+    len = 0;
 	while(envcpy[i] != NULL && i <= sizeof_array(envcpy))
 	{
-		if(ft_strfcmp(envcpy[i], env) == 0)
-			return i;
+		if(ft_strncmp(envcpy[i], env, len_til_equal(envcpy[i])) == 0)
+        {
+            if(len_til_equal(envcpy[i]) > len && len_til_equal(envcpy[i]) == len_til_special(env))
+            {
+                len = len_til_equal(envcpy[i]);
+                n = i;
+            }
+        }
 		i++;
 	}
-	return -1;
+    if(len > 0)
+        return n;
+    else
+	    return -1;
 }
