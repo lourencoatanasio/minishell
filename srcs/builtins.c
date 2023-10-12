@@ -59,6 +59,7 @@ void	shell_pwd(char **envpcpy)
 	cwd = ft_getenv("PWD", envpcpy);
 	printf("%s\n", cwd);
 	free(cwd);
+
 }
 
 void ft_setenv(char *name, char *value, char **envpcpy)
@@ -93,26 +94,6 @@ void ft_setenv(char *name, char *value, char **envpcpy)
 		envpcpy[i] = ft_strdup(name);
 	}
 	envpcpy[i + 1] = NULL;
-}
-
-void ft_chdir(char *path, char**envpcpy)
-{
-	char *cwd;
-	char *oldpwd;
-
-	oldpwd = ft_getenv("PWD", envpcpy);
-	cwd = ft_getenv("PWD", envpcpy);
-	if (chdir(path) == -1)
-	{
-		printf("minishell: cd: %s: No such file or directory\n", path);
-		free(cwd);
-		free(oldpwd);
-		return ;
-	}
-	ft_setenv("OLDPWD", oldpwd, envpcpy);
-	ft_setenv("PWD", cwd, envpcpy);
-	free(cwd);
-	free(oldpwd);
 }
 
 char* ft_strchr(const char* str, int ch)
@@ -287,16 +268,17 @@ void	til(t_node **head, char **envpcpy)
 
 void	shell_cd(t_node **head, char **envpcpy)
 {
+	printf("cd\n");
 	if ((* head)->args && (* head)->args[1] && (* head)->args[2])
 	{
-		printf("amazingshell: cd: too many arguments\n");
+		printf("minishell: cd: too many arguments\n");
 		write((* head)->error, "1\n", 2);
 	}
 	else if (!(* head)->args[1] || ft_strcmp((* head)->args[1], "~") == 0)
 	{
 		if (chdir(getenv("HOME")) != 0)
 		{
-			printf("amazingshell: cd: HOME not set\n");
+			printf("minishell: cd: HOME not set\n");
 			write((* head)->error, "1\n", 2);
 		}
 		else
@@ -324,7 +306,7 @@ void	shell_cd(t_node **head, char **envpcpy)
 	}
 	else if (chdir((* head)->args[1]) != 0)
 	{
-		printf("minishell: %s: Invalid directory\n", (* head)->args[1]);
+		printf("minishell: cd : %s: No such file or directory\n", (* head)->args[1]);
 		write((* head)->error, "1\n", 2);
 	}
 	else

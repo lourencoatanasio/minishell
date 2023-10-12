@@ -41,8 +41,6 @@ char *cut_name(char *str)
 	i = 0;
 	n = 0;
 	c = 0;
-	printf("cut_name\n");
-	printf("str = %s\n", str);
 	while((str[i] != '\0' && str[i] != '$' && ft_isalnum(str[i]) == 0) || str[i] == '_')
     {
         i++;
@@ -123,17 +121,10 @@ void handle_dollar(t_node **head, char **envcpy)
 						break;
 					halves = cutString(tmp->args[i], n);
 					env = ft_getenv(halves[1], envcpy);
-                    printf("====================================\n");
-                    printf("halves[0] = %s\n", halves[0]);
-                    printf("halves[1] = %s\n", halves[1]);
 					if(env)
-                    {
                         str = ft_strjoin(halves[0], env);
-                        printf("env\n");
-                    }
 					else
 						str = ft_strjoin(halves[0], "");
-                    printf("str = %s\n", str);
 					name = cut_name(halves[1]);
 					tmpstr = ft_strjoin(str, name);
 					free(tmp->args[i]);

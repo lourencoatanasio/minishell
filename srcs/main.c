@@ -74,7 +74,6 @@ char	*find_path(char **paths, char *cmd)
 		free(path);
 		i++;
 	}
-	printf("Command not found\n");
 	return (NULL);
 }
 
@@ -147,7 +146,6 @@ char *get_quotes(char *str)
 		i++;
 	}
 	quotes[i] = '\0';
-	printf("quotes = %s\n", quotes);
 	return quotes;
 }
 
@@ -163,7 +161,6 @@ char ***store_cmds(char *line)
 		return (NULL);
 	quotes = get_quotes(line);
 	aux = ft_split_quote(line, quotes, '|');
-	print_array(aux);
 	if(!aux)
 		return (NULL);
 	cmds = malloc(sizeof(char **) * (sizeof_array(aux) + 1));
@@ -243,9 +240,6 @@ t_node	*create_node_cmd(char **args, int error)
 		{
 			node->args[i] = ft_strdup(args[i]);
 			node->quotes[i] = get_quotes(node->args[i]);
-            printf("====================================\n");
-            printf("args[%d] = %s\n", i, args[i]);
-            printf("====================================\n");
             i++;
 		}
 		node->args[i] = NULL;
@@ -311,7 +305,6 @@ t_node *create_list(char ***cmds, t_node *head, int error)
 		add_node(&head, create_node_cmd(cmds[i], error));
 		i++;
 	}
-    printf("i = %d\n", i);
 	return head;
 }
 
@@ -370,7 +363,7 @@ void	builtin(char **envpcpy, char **cmd, t_node **head)
 		shell_env(envpcpy);
 }
 
-void child_one(char **envp, char **cmd, char *path, t_node **head)
+int child_one(char **envp, char **cmd, char *path, t_node **head)
 {
 	int fd[2];
 	pid_t pid;
@@ -386,11 +379,11 @@ void child_one(char **envp, char **cmd, char *path, t_node **head)
 		close(fd[0]);
 		dup2(fd[1], STDOUT_FILENO);
         close(fd[1]);
-		if(is_builtin(cmd[0]) == 1)
+		if (is_builtin(cmd[0]) == 1)
 			builtin(envp, cmd, head);
 		else
 			execve(path, cmd, envp);
-		exit(0);
+		return 1;
 	}
     else
     {
@@ -399,6 +392,7 @@ void child_one(char **envp, char **cmd, char *path, t_node **head)
         close(fd[0]);
     }
 	wait(NULL);
+	return 0;
 }
 
 int	node_count(t_node **head)
@@ -416,7 +410,7 @@ int	node_count(t_node **head)
 	return i;
 }
 
-void pipex(char **envpcpy, t_node **head)
+int pipex(char **envpcpy, t_node **head)
 {
 	char **paths;
 	char *path;
@@ -426,7 +420,7 @@ void pipex(char **envpcpy, t_node **head)
 	int stdin;
 
 	if (!(*head))
-		return ;
+		return 0;
 	stdout = dup(STDOUT_FILENO);
 	stdin = dup(STDIN_FILENO);
 	paths = get_paths(envpcpy);
@@ -435,25 +429,32 @@ void pipex(char **envpcpy, t_node **head)
 	{
 		cmd = (*tmp).args;
 		path = find_path(paths, (*tmp).cmd);
-		child_one(envpcpy, cmd, path, &tmp);
+		if(child_one(envpcpy, cmd, path, &tmp) == 1)
+		{
+			free(path);
+			free_array(paths);
+			return 1;
+		}
 		free(path);
 		tmp = tmp->next;
 	}
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	dup2(stdout, STDOUT_FILENO);
-	if(fork() == 0)
+	if(is_builtin(cmd[0]) == 1)
 	{
-		if(is_builtin(cmd[0]) == 1)
-			builtin(envpcpy, cmd, head);
-		else
-			execve(path, cmd, envpcpy);
+		builtin(envpcpy, cmd, head);
+		free(path);
+		free_array(paths);
+		return 0;
 	}
+	else if(fork() == 0)
+		execve(path, cmd, envpcpy);
 	wait(NULL);
 	dup2(stdin, STDIN_FILENO);
 	free(path);
 	free_array(paths);
-	return ;
+	return 0;
 }
 
 char **copy_env(char **envp)
@@ -496,6 +497,8 @@ int create_error_file()
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
+	char *write;
+	char *tmp;
 	char ***cmds;
     char **envcpy;
     int error;
@@ -504,7 +507,7 @@ int main(int argc, char **argv, char **envp)
 
 	(void )argc;
 	(void )argv;
-    envcpy = copy_env(envp); //not freed
+    envcpy = copy_env(envp);
     error = create_error_file();
     while(1)
 	{
@@ -512,33 +515,40 @@ int main(int argc, char **argv, char **envp)
 		headmaster = NULL;
 		line = NULL;
 		sig_handler();
-		line = readline("minishell$ ");
-        printf("line: %s\n", line);
+		write = getcwd(NULL, 0);
+		tmp = ft_strjoin(write, "$ ");
+		line = readline(tmp);
+		free(tmp);
 		if(!line)
 		{
-            printf("exit\n");
+			//control D
+            printf("\nexit\n");
+			free(write);
 			free(line);
-            free_array(envcpy);
-            exit(0);
+			break;
 		}
         if(line != NULL && ft_strlen(line) > 0)
         {
 			add_history(line);
 			cmds = store_cmds(line);
-            print_triple(cmds);
 			if(!cmds)
 				continue ;
-            print_triple(cmds);
             headmaster = create_list(cmds, headmaster, error);
 			handle_quotes(&headmaster);
-			printf("====================================\n");
-			print_list(&headmaster);
             handle_dollar(&headmaster, envcpy);
-			pipex(envcpy, &headmaster);
+			if(pipex(envcpy, &headmaster) == 1)
+			{
+				free_list(&headmaster);
+				free_triple(cmds);
+				free(line);
+				break;
+			}
 			free_list(&headmaster);
-            free_triple(cmds);
-            free(line);
+			free_triple(cmds);
+			free(line);
+			free(write);
         }
 	}
+	free_array(envcpy);
 	return 0;
 }

@@ -85,7 +85,6 @@ char	**ft_split_quote(char *str, char *quotes, char c)
 		i++;
 	}
 	array[i] = (char *) NULL;
-	print_array(array);
 	return (array);
 }
 

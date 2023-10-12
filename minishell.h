@@ -56,7 +56,7 @@ int sizeof_array(char **array);
 t_node	*create_node_cmd(char **args, int error);
 t_node *create_list(char ***cmds, t_node *head, int error);
 void print_list(t_node **head);
-void child_one(char **envp, char **cmd, char *path, t_node **head);
+int child_one(char **envp, char **cmd, char *path, t_node **head);
 void	sig_handler(void);
 char **cutString(char *str, int position);
 char *get_name_env(int i, char **envcpy);
