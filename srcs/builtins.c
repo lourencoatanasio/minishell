@@ -39,7 +39,7 @@ int	ft_strstr(char *str, char t_find)
 	return (0);
 }
 
-void	shell_env(char **envpcpy)
+void	shell_env(t_node **head, char **envpcpy)
 {
 	int i;
 
@@ -50,16 +50,17 @@ void	shell_env(char **envpcpy)
 			printf("%s\n", envpcpy[i]);
 		i++;
 	}
+    write((* head)->error, "0\n", 2);
 }
 
-void	shell_pwd(char **envpcpy)
+void	shell_pwd(t_node **head, char **envpcpy)
 {
 	char *cwd;
 
 	cwd = ft_getenv("PWD", envpcpy);
 	printf("%s\n", cwd);
 	free(cwd);
-
+    write((* head)->error, "0\n", 2);
 }
 
 void ft_setenv(char *name, char *value, char **envpcpy)
@@ -77,7 +78,7 @@ void ft_setenv(char *name, char *value, char **envpcpy)
 			free(envpcpy[i]);
 			envpcpy[i] = ft_strdup(aux);
 			free(aux);
-			return ;
+            return ;
 		}
 		i++;
 	}
@@ -93,7 +94,7 @@ void ft_setenv(char *name, char *value, char **envpcpy)
 		free(envpcpy[i]);
 		envpcpy[i] = ft_strdup(name);
 	}
-	envpcpy[i + 1] = NULL;
+    envpcpy[i + 1] = NULL;
 }
 
 char* ft_strchr(const char* str, int ch)
@@ -344,4 +345,5 @@ void	shell_unset(t_node **node, char **envpcpy)
 		}
 		i++;
 	}
+    write((* node)->error, "0\n", 2);
 }

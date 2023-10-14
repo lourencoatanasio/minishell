@@ -69,9 +69,9 @@ char **copy_env(char **envp);
 int ft_strncmp(char *s1, char *s2, int n);
 char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize);
 
-void	shell_pwd(char **envpcpy);
+void	shell_pwd(t_node **head, char **envpcpy);
 void shell_echo(t_node **head);
-void	shell_env(char **envpcpy);
+void	shell_env(t_node **head, char **envpcpy);
 void	shell_unset(t_node **node, char **envpcpy);
 
 void ft_setenv(char *name, char *value, char **envpcpy);

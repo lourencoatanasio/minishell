@@ -354,13 +354,13 @@ void	builtin(char **envpcpy, char **cmd, t_node **head)
 	else if (ft_strncmp(cmd[0], "cd", 3) == 0)
 		shell_cd(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "pwd", 4) == 0)
-		shell_pwd(envpcpy);
+		shell_pwd(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "export", 7) == 0)
 		shell_export(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "unset", 6) == 0)
 		shell_unset(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "env", 4) == 0)
-		shell_env(envpcpy);
+		shell_env(head, envpcpy);
 }
 
 int child_one(char **envp, char **cmd, char *path, t_node **head)
@@ -429,24 +429,32 @@ int pipex(char **envpcpy, t_node **head)
 	{
 		cmd = (*tmp).args;
 		path = find_path(paths, (*tmp).cmd);
-		if(child_one(envpcpy, cmd, path, &tmp) == 1)
-		{
-			free(path);
-			free_array(paths);
-			return 1;
-		}
+        if(access(path, F_OK) == 0)
+        {
+            if (child_one(envpcpy, cmd, path, &tmp) == 1)
+            {
+                free(path);
+                free_array(paths);
+                return 1;
+            }
+        }
 		free(path);
 		tmp = tmp->next;
 	}
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	dup2(stdout, STDOUT_FILENO);
-	if(is_builtin(cmd[0]) == 1)
+    if(access(path, F_OK) == -1)
+    {
+        printf("minishell: %s: command not found\n", cmd[0]);
+        write((*head)->error, "1\n", 2);
+    }
+	else if(is_builtin(cmd[0]) == 1)
 	{
 		builtin(envpcpy, cmd, head);
 		free(path);
 		free_array(paths);
-		return 0;
+		return 1;
 	}
 	else if(fork() == 0)
 		execve(path, cmd, envpcpy);
@@ -465,7 +473,7 @@ char **copy_env(char **envp)
     i = 0;
     while(envp[i])
         i++;
-    envcpy = (char **)malloc(sizeof(char *) * (i + 1));
+    envcpy = (char **)malloc(sizeof(char *) * (i + 2));
     i = 0;
     while(envp[i])
     {
@@ -522,7 +530,7 @@ int main(int argc, char **argv, char **envp)
 		if(!line)
 		{
 			//control D
-            printf("\nexit\n");
+            printf("exit\n");
 			free(write);
 			free(line);
 			break;
