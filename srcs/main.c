@@ -382,7 +382,13 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
 		if (is_builtin(cmd[0]) == 1)
 			builtin(envp, cmd, head);
 		else
-			execve(path, cmd, envp);
+        {
+            if (execve(path, cmd, envp) == -1)
+            {
+                change_error(envp, errno);
+                exit(0);
+            }
+        }
 		return (1);
 	}
     else
@@ -437,6 +443,8 @@ int pipex(char **envpcpy, t_node **head)
                 free_array(paths);
                 return (1);
             }
+            else
+                change_error(envpcpy, errno);
         }
 		else
 		{
@@ -455,15 +463,25 @@ int pipex(char **envpcpy, t_node **head)
 		if (is_builtin(cmd[0]) == 1)
 			builtin(envpcpy, cmd, head);
 		else if (fork() == 0)
-			execve(path, cmd, envpcpy);
+        {
+            if (execve(path, cmd, envpcpy) == -1)
+            {
+                change_error(envpcpy, errno);
+                exit(0);
+            }
+        }
 	}
 	else
 	{
 		printf("minishell: %s: command not found\n", (*tmp).cmd);
 		change_error(envpcpy, 127);
 	}
-	wait(NULL);
+    wait(NULL);
 	dup2(stdin, STDIN_FILENO);
+    if (is_builtin(cmd[0]) != 1)
+    {
+    //    change_error(envpcpy, errno);
+    }
 	free(path);
 	free_array(paths);
 	return 0;

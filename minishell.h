@@ -14,6 +14,7 @@
 # include<string.h>
 # include<sys/wait.h>
 # include<fcntl.h>
+# include<errno.h>
 
 typedef struct s_node
 {
