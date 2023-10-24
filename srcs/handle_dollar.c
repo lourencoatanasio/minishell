@@ -41,10 +41,12 @@ char *cut_name(char *str)
 	i = 0;
 	n = 0;
 	c = 0;
-	while((str[i] != '\0' && str[i] != '$' && ft_isalnum(str[i]) == 0) || str[i] == '_')
+	while((str[i] != '\0' && str[i] != '$' && ft_isalnum(str[i]) == 0) || str[i] == '_' || str[i] == '?')
     {
         i++;
         n++;
+		if(str[i] == '?')
+			break ;
     }
 	if(str[i] == '\0')
 		return "";
@@ -90,6 +92,8 @@ char *ft_getenv(char *name, char **envcpy)
 	int i;
 	char *env;
 
+	if(name[0] == '?')
+		return get_env_val(0, envcpy);
 	i = find_env_line(name, envcpy);
 	env = get_env_val(i, envcpy);
 	return env;
@@ -174,7 +178,7 @@ int len_til_equal(char *str)
 
 int ft_isalnum_dif(int c)
 {
-    if ((c >= '0' && c <= '9') || ft_isalpha(c) == 0 || c == '_')
+    if ((c >= '0' && c <= '9') || ft_isalpha(c) == 0 || c == '_' || c == '?')
         return (0);
     return (1);
 }

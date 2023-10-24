@@ -224,7 +224,7 @@ char* removeCharAtIndex(char* str, int index)
 	return result;
 }
 
-t_node	*create_node_cmd(char **args, int error)
+t_node	*create_node_cmd(char **args)
 {
     t_node	*node;
 	int		i;
@@ -258,7 +258,6 @@ t_node	*create_node_cmd(char **args, int error)
     node->output = 0;
     node->append = 0;
     node->here_doc = 0;
-    node->error = error;
     node->next = NULL;
     return (node);
 }
@@ -292,7 +291,7 @@ void	handle_quotes(t_node **head)
 	}
 }
 
-t_node *create_list(char ***cmds, t_node *head, int error)
+t_node *create_list(char ***cmds, t_node *head)
 {
 	int i;
 
@@ -302,7 +301,7 @@ t_node *create_list(char ***cmds, t_node *head, int error)
 		return NULL;
 	while (cmds[i])
 	{
-		add_node(&head, create_node_cmd(cmds[i], error));
+		add_node(&head, create_node_cmd(cmds[i]));
 		i++;
 	}
 	return head;
@@ -354,13 +353,13 @@ void	builtin(char **envpcpy, char **cmd, t_node **head)
 	else if (ft_strncmp(cmd[0], "cd", 3) == 0)
 		shell_cd(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "pwd", 4) == 0)
-		shell_pwd(head, envpcpy);
+		shell_pwd(envpcpy);
 	else if (ft_strncmp(cmd[0], "export", 7) == 0)
 		shell_export(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "unset", 6) == 0)
 		shell_unset(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "env", 4) == 0)
-		shell_env(head, envpcpy);
+		shell_env(envpcpy);
 }
 
 int child_one(char **envp, char **cmd, char *path, t_node **head)
@@ -371,6 +370,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
 	if (pipe(fd) == -1)
 		exit(0);
 
+	change_error(envp, 0);
 	pid = fork();
 	if (pid == -1)
 		exit(0);
@@ -383,7 +383,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
 			builtin(envp, cmd, head);
 		else
 			execve(path, cmd, envp);
-		return 1;
+		return (1);
 	}
     else
     {
@@ -429,35 +429,39 @@ int pipex(char **envpcpy, t_node **head)
 	{
 		cmd = (*tmp).args;
 		path = find_path(paths, (*tmp).cmd);
-        if(access(path, F_OK) == 0)
+        if(access(path, F_OK) == 0 || is_builtin(cmd[0]) == 1)
         {
             if (child_one(envpcpy, cmd, path, &tmp) == 1)
             {
                 free(path);
                 free_array(paths);
-                return 1;
+                return (1);
             }
         }
+		else
+		{
+			printf("minishell: %s: command not found\n", (*tmp).cmd);
+			change_error(envpcpy, 127);
+		}
 		free(path);
 		tmp = tmp->next;
 	}
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	dup2(stdout, STDOUT_FILENO);
-    if(access(path, F_OK) == -1)
-    {
-        printf("minishell: %s: command not found\n", cmd[0]);
-        write((*head)->error, "1\n", 2);
-    }
-	else if(is_builtin(cmd[0]) == 1)
+    if(access(path, F_OK) == 0 || is_builtin(cmd[0]) == 1)
 	{
-		builtin(envpcpy, cmd, head);
-		free(path);
-		free_array(paths);
-		return 1;
+		change_error(envpcpy, 0);
+		if (is_builtin(cmd[0]) == 1)
+			builtin(envpcpy, cmd, head);
+		else if (fork() == 0)
+			execve(path, cmd, envpcpy);
 	}
-	else if(fork() == 0)
-		execve(path, cmd, envpcpy);
+	else
+	{
+		printf("minishell: %s: command not found\n", (*tmp).cmd);
+		change_error(envpcpy, 127);
+	}
 	wait(NULL);
 	dup2(stdin, STDIN_FILENO);
 	free(path);
@@ -474,7 +478,8 @@ char **copy_env(char **envp)
     while(envp[i])
         i++;
     envcpy = (char **)malloc(sizeof(char *) * (i + 2));
-    i = 0;
+    i = 1;
+	envcpy[0] = ft_strdup("?=0");
     while(envp[i])
     {
         envcpy[i] = ft_strdup(envp[i]);
@@ -484,24 +489,6 @@ char **copy_env(char **envp)
     return envcpy;
 }
 
-int create_error_file()
-{
-    int file;
-    char *path;
-    char tmp[1024];
-
-    getcwd(tmp, sizeof(tmp));
-    path = ft_strjoin(tmp, "/.e");
-    file = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-    if (file == -1)
-    {
-        printf("Error creating error file\n");
-        exit(0);
-    }
-    free(path);
-    return file;
-}
-
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
@@ -509,14 +496,12 @@ int main(int argc, char **argv, char **envp)
 	char *tmp;
 	char ***cmds;
     char **envcpy;
-    int error;
 
     t_node *headmaster;
 
 	(void )argc;
 	(void )argv;
     envcpy = copy_env(envp);
-    error = create_error_file();
     while(1)
 	{
 		cmds = NULL;
@@ -539,9 +524,7 @@ int main(int argc, char **argv, char **envp)
         {
 			add_history(line);
 			cmds = store_cmds(line);
-			if(!cmds)
-				continue ;
-            headmaster = create_list(cmds, headmaster, error);
+            headmaster = create_list(cmds, headmaster);
 			handle_quotes(&headmaster);
             handle_dollar(&headmaster, envcpy);
 			if(pipex(envcpy, &headmaster) == 1)
@@ -549,7 +532,7 @@ int main(int argc, char **argv, char **envp)
 				free_list(&headmaster);
 				free_triple(cmds);
 				free(line);
-				break;
+				break ;
 			}
 			free_list(&headmaster);
 			free_triple(cmds);

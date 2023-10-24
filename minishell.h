@@ -53,8 +53,8 @@ char *ft_trim(char *str, char *set);
 char ***store_cmds(char *line);
 void add_node(t_node **head, t_node *node);
 int sizeof_array(char **array);
-t_node	*create_node_cmd(char **args, int error);
-t_node *create_list(char ***cmds, t_node *head, int error);
+t_node	*create_node_cmd(char **args);
+t_node *create_list(char ***cmds, t_node *head);
 void print_list(t_node **head);
 int child_one(char **envp, char **cmd, char *path, t_node **head);
 void	sig_handler(void);
@@ -69,9 +69,9 @@ char **copy_env(char **envp);
 int ft_strncmp(char *s1, char *s2, int n);
 char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize);
 
-void	shell_pwd(t_node **head, char **envpcpy);
+void	shell_pwd(char **envpcpy);
 void shell_echo(t_node **head);
-void	shell_env(t_node **head, char **envpcpy);
+void	shell_env(char **envpcpy);
 void	shell_unset(t_node **node, char **envpcpy);
 
 void ft_setenv(char *name, char *value, char **envpcpy);
@@ -94,7 +94,6 @@ void	builtin(char **envpcpy, char **cmd, t_node **head);
 int ft_isalnum(int c);
 int ft_isalpha(int c);
 
-
-
+void	change_error(char **envcpy, int value);
 
 #endif //MINISHELL_H
