@@ -1,5 +1,5 @@
 SRCS		=		main.c signals.c frees.c handle_dollar.c builtins.c split.c utils.c \
-					utils_2.c
+					utils_2.c get_next_line.c
 
 OBJS 		=		$(addprefix objs/,$(SRCS:.c=.o))
 

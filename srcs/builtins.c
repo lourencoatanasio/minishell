@@ -79,7 +79,7 @@ int	ft_strstr(char *str, char t_find)
 	return (0);
 }
 
-void	shell_env(char **envpcpy)
+void	shell_env(char **envpcpy, t_node **head)
 {
 	int i;
 
@@ -90,17 +90,17 @@ void	shell_env(char **envpcpy)
 			printf("%s\n", envpcpy[i]);
 		i++;
 	}
-	change_error(envpcpy, 0);
+    write((* head)->error, "0\n", 2);
 }
 
-void	shell_pwd(char **envpcpy)
+void	shell_pwd(char **envpcpy, t_node **head)
 {
 	char *cwd;
 
 	cwd = ft_getenv("PWD", envpcpy);
 	printf("%s\n", cwd);
 	free(cwd);
-	change_error(envpcpy, 0);
+    write((* head)->error, "0\n", 2);
 }
 
 void ft_setenv(char *name, char *value, char **envpcpy)
@@ -253,7 +253,7 @@ void	shell_export(t_node **node, char **envpcpy)
 	if(!(*node)->args[i])
 	{
 		print_ext_set(envpcpy);
-		change_error(envpcpy, 0);
+        write((* node)->error, "0\n", 2);
 		return ;
 	}
 	while ((*node)->args[i])
@@ -261,7 +261,7 @@ void	shell_export(t_node **node, char **envpcpy)
         if (export_checker((*node)->args[i]) == 1)
         {
             printf("export: '%s': not a valid identifier\n", (*node)->args[i]);
-			change_error(envpcpy, 1);
+            write((* node)->error, "1\n", 2);
 			return ;
         }
 		else if (ft_strchr((*node)->args[i], '=') != NULL)
@@ -297,13 +297,13 @@ void	til(t_node **head, char **envpcpy)
 	if (chdir((* head)->args[1] + 2) != 0)
 	{
 		printf("minishell: %s: Invalid directory\n", (* head)->args[1]);
-		change_error(envpcpy, 1);
+        write((* head)->error, "1\n", 2);
 	}
 	else
 	{
 		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
 		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
-		change_error(envpcpy, 0);
+        write((* head)->error, "0\n", 2);
 	}
 }
 
@@ -313,20 +313,20 @@ void	shell_cd(t_node **head, char **envpcpy)
 	if ((* head)->args && (* head)->args[1] && (* head)->args[2])
 	{
 		printf("minishell: cd: too many arguments\n");
-		change_error(envpcpy, 1);
+        write((* head)->error, "1\n", 2);
 	}
 	else if (!(* head)->args[1] || ft_strcmp((* head)->args[1], "~") == 0)
 	{
 		if (chdir(getenv("HOME")) != 0)
 		{
 			printf("minishell: cd: HOME not set\n");
-			change_error(envpcpy, 1);
+            write((* head)->error, "1\n", 2);
 		}
 		else
 		{
 			ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
 			ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
-			change_error(envpcpy, 0);
+            write((* head)->error, "0\n", 2);
 		}
 	}
 	else if ((* head)->args[1][0] == '~' && (* head)->args[1][1] == '/')
@@ -336,25 +336,25 @@ void	shell_cd(t_node **head, char **envpcpy)
 		if (chdir(getenv("OLDPWD")) != 0)
 		{
 			printf("minishell: cd: OLDPWD not set\n");
-			change_error(envpcpy, 1);
+            write((* head)->error, "1\n", 2);
 		}
 		else
 		{
 			ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
 			ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
-			change_error(envpcpy, 0);
+            write((* head)->error, "0\n", 2);
 		}
 	}
 	else if (chdir((* head)->args[1]) != 0)
 	{
 		printf("minishell: cd : %s: No such file or directory\n", (* head)->args[1]);
-		change_error(envpcpy, 1);
+        write((* head)->error, "1\n", 2);
 	}
 	else
 	{
 		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
 		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
-		change_error(envpcpy, 0);
+        write((* head)->error, "0\n", 2);
 	}
 }
 
@@ -385,5 +385,5 @@ void	shell_unset(t_node **node, char **envpcpy)
 		}
 		i++;
 	}
-	change_error(envpcpy, 0);
+    write((* node)->error, "0\n", 2);
 }
