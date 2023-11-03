@@ -19,6 +19,8 @@ int ft_atoi(char *str)
 	i = 0;
 	sign = 1;
 	num = 0;
+	if (!str)
+		return (0);
 	while (str[i] && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' ||
 					  str[i] == '\v' || str[i] == '\f' || str[i] == '\r'))
 		i++;

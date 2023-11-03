@@ -1,5 +1,23 @@
 #include "../minishell.h"
 
+size_t	ft_strlcpy_get(char *dst, char *src, size_t size)
+{
+	size_t	i;
+
+	if (!dst || !src)
+		return (0);
+	else if (!size)
+		return (ft_strlen(src));
+	i = 0;
+	while (src[i] && i < (size - 1))
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = '\0';
+	return (ft_strlen(src));
+}
+
 char	*ft_strnldup(char *s1)
 {
     char	*str;
@@ -71,19 +89,19 @@ char	*get_nl(int fd, char *buffer, char *str, char *save)
 
 char	*get_next_line(int fd)
 {
-    static char	*str;
-    char		*buffer;
-    char		*save;
+	static char	*str;
+	char		*buffer;
+	char		*save;
 
-    if (read(fd, 0, 0) == -1)
-        return (NULL);
-    buffer = (char *)malloc(sizeof(char) * (1 + 1));
-    if (!buffer)
-        return (NULL);
-    save = NULL;
-    str = get_nl(fd, buffer, str, save);
-    free(buffer);
-    save = ft_strnldup(str);
-    str = ft_exstrchr(str);
-    return (save);
+	if (read(fd, 0, 0) == -1)
+		return (NULL);
+	buffer = (char *)malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!buffer)
+		return (NULL);
+	save = NULL;
+	str = get_nl(fd, buffer, str, save);
+	free(buffer);
+	save = ft_strnldup(str);
+	str = ft_exstrchr(str);
+	return (save);
 }

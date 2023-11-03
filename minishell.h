@@ -16,6 +16,10 @@
 # include<fcntl.h>
 # include<errno.h>
 
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 32
+# endif
+
 typedef struct s_node
 {
 	char *cmd;
@@ -105,6 +109,8 @@ char	*get_next_line(int fd);
 char	*ft_exstrchr(char *s);
 char	*ft_strnldup(char *s1);
 int     ft_atoi(char *str);
+size_t	ft_strlcpy_get(char *dst, char *src, size_t size);
+
 
 
 

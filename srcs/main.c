@@ -527,22 +527,25 @@ int get_last_value()
 {
     int fd;
     char *line;
-    //char *tmp;
+    char *tmp;
     int r;
 
     r = 0;
-    fd = open("ola", O_RDONLY);
-    printf("fd = %d\n", fd);
-    while (1)
+    fd = open(".e", O_RDONLY);
+	tmp = NULL;
+    while ((line = get_next_line(fd)))
     {
-        line = get_next_line(fd);
-        printf("%s\n", line);
-        break ;
+		if (line && tmp)
+			free(tmp);
+		if (!line)
+			break ;
+		tmp = ft_strdup(line);
+		free(line);
     }
-    if(line != NULL)
+    if (tmp != NULL)
     {
-        r = ft_atoi(line);
-        free(line);
+        r = ft_atoi(tmp);
+        free(tmp);
     }
     return (r);
 }
@@ -638,7 +641,7 @@ int create_error_file()
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
-	char *write;
+	char *written;
 	char *tmp;
 	char ***cmds;
     char **envcpy;
@@ -651,21 +654,22 @@ int main(int argc, char **argv, char **envp)
 	(void )argv;
     envcpy = copy_env(envp);
     error = create_error_file();
+	write(error, "0\n", 2);
     while(1)
 	{
 		cmds = NULL;
 		headmaster = NULL;
 		line = NULL;
 		sig_handler();
-		write = getcwd(NULL, 0);
-		tmp = ft_strjoin(write, "$ ");
+		written = getcwd(NULL, 0);
+		tmp = ft_strjoin(written, "$ ");
 		line = readline(tmp);
 		free(tmp);
 		if(!line)
 		{
 			//control D
             printf("exit\n");
-			free(write);
+			free(written);
 			free(line);
 			break;
 		}
@@ -686,7 +690,7 @@ int main(int argc, char **argv, char **envp)
 			free_list(&headmaster);
 			free_triple(cmds);
 			free(line);
-			free(write);
+			free(written);
         }
 	}
 	free_array(envcpy);

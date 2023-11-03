@@ -52,7 +52,6 @@ void shell_echo(t_node **head)
 			i++;
 			break_flag = 1;
 		}
-
 	}
 	while ((*head)->args[i])
 	{
@@ -63,6 +62,7 @@ void shell_echo(t_node **head)
 	}
 	if (break_flag == 0)
 		printf("\n");
+	write((* head)->error, "0\n", 2);
 }
 
 int	ft_strstr(char *str, char t_find)
@@ -137,17 +137,22 @@ void ft_setenv(char *name, char *value, char **envpcpy)
     envpcpy[i + 1] = NULL;
 }
 
-char* ft_strchr(const char* str, int ch)
+char	*ft_strchr(const char *s, int c)
 {
-	while (*str != '\0')
+	int	i;
+
+	i = 0;
+	if (!s)
+		return (0);
+	while (s[i])
 	{
-		if (*str == ch)
-		{
-			return (char*)str;
-		}
-		str++;
+		if (s[i] == (char)c)
+			return ((char *)(s + i));
+		i++;
 	}
-	return NULL;
+	if (s[i] == (char)c)
+		return ((char *)(s + i));
+	return (NULL);
 }
 
 char **cpy_array(char **envpcpy)
