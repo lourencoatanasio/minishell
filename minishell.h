@@ -63,6 +63,7 @@ t_node *create_list(char ***cmds, t_node *head, int error);
 void print_list(t_node **head);
 int child_one(char **envp, char **cmd, char *path, t_node **head);
 void	sig_handler(void);
+void			sig_handler_block(void);
 char **cutString(char *str, int position);
 char *get_name_env(int i, char **envcpy);
 char *cut_name(char *str);
@@ -110,6 +111,8 @@ char	*ft_exstrchr(char *s);
 char	*ft_strnldup(char *s1);
 int     ft_atoi(char *str);
 size_t	ft_strlcpy_get(char *dst, char *src, size_t size);
+int		get_last_value();
+
 
 
 
