@@ -427,7 +427,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
         else
         {
             if (execve(path, cmd, envp) == -1)
-                exit(0);
+                return (1);
         }
         return (1);
     }
@@ -437,7 +437,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
         dup2(fd[0], STDIN_FILENO);
         close(fd[0]);
         waitpid(pid, &status, 0);// Wait for the child process to finish
-        if (WIFEXITED(status))
+        if(is_builtin(cmd[0]) == 0 && WIFEXITED(status))
         {
             exit_status = WEXITSTATUS(status);
             exit_status_str = ft_itoa(exit_status);
@@ -452,7 +452,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
 			g_ec = get_last_value();
 		}
 	}
-    return 0;
+    return (0);
 }
 
 int	node_count(t_node **head)
@@ -497,7 +497,7 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node *head)
 		else
 		{
 			waitpid(pid, &status, 0);
-			if (WIFEXITED(status))
+            if(is_builtin(cmd[0]) == 0 && WIFEXITED(status))
 			{
 				exit_status = WEXITSTATUS(status);
 				exit_status_str = ft_itoa(exit_status);
@@ -509,8 +509,8 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node *head)
 					write(head->error, "\n", 1);
 				}
 				free(exit_status_str);
+                g_ec = get_last_value();
 			}
-			g_ec = get_last_value();
 		}
 	}
 	else
@@ -638,6 +638,129 @@ int create_error_file()
     return file;
 }
 
+char *ft_strndup(char *str, int n)
+{
+    int i;
+    char *tmp;
+
+    i = 0;
+    tmp = (char *)malloc(sizeof(char) * (n + 1));
+    while(i < n)
+    {
+        tmp[i] = str[i];
+        i++;
+    }
+    tmp[i] = '\0';
+    return tmp;
+}
+
+char *get_name(char *args, int n)
+{
+    int i;
+    char tmp[1024];
+    char *tmp2;
+    char *tmp3;
+    char *path;
+
+    i = n;
+    while(args[i] != '\0')
+    {
+        if (args[i] == '>' || args[i] == '<')
+            break;
+        i++;
+    }
+    getcwd(tmp, sizeof(tmp));
+    tmp2 = ft_strndup(&args[n], i - n);
+    tmp3 = ft_strjoin("/", tmp2);
+    path = ft_strjoin(tmp, tmp3);
+    printf("path: %s\n", path);
+    free(tmp3);
+    free(tmp2);
+    return path;
+}
+
+int check_file(char **args, int i, int n)
+{
+    int fd;
+    char *tmp;
+
+    n += 1;
+    printf("check_file\n");
+    if (args[i][n] == '>' || args[i][n] == '<')
+    {
+        printf("minishell: syntax error near unexpected token `>'\n");
+        return (1);
+    }
+    if (args[i][n] == '\0')
+    {
+        tmp = get_name(args[i + 1], 0);
+        if (tmp == NULL)
+        {
+            printf("minishell: syntax error near unexpected token `newline'\n");
+            return (1);
+        }
+        fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (fd == -1)
+        {
+            printf("minishell: %s: No such file or directory\n", tmp);
+            return (1);
+        }
+    }
+    else if (args[i][n] != '\0')
+    {
+        tmp = get_name(args[i], n);
+        if (tmp == NULL)
+        {
+            printf("minishell: syntax error near unexpected token `newline'\n");
+            return (1);
+        }
+        fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (fd == -1)
+        {
+            printf("minishell: %s: No such file or directory\n", tmp);
+            return (1);
+        }
+        close(fd);
+    }
+    if (args[i + 1] == NULL)
+    {
+        printf("minishell: syntax error near unexpected token `newline'\n");
+        return (1);
+    }
+    return (0);
+}
+
+void    handle_redirections(t_node **head)
+{
+    t_node *tmp;
+    int i;
+    int n;
+
+    tmp = *head;
+    while(tmp)
+    {
+        i = 0;
+        while(tmp->args[i])
+        {
+            n = 0;
+            while(tmp->args[i][n])
+            {
+                printf("args: %c\n", tmp->args[i][n]);
+                if(tmp->args[i][n] == '>' && tmp->quotes[i][n] == '0')
+                {
+                    if(tmp->args[i][n + 1] == '>')
+                        tmp->append = check_file(tmp->args, i, n + 1);
+                    else
+                        tmp->output = check_file(tmp->args, i, n);
+                }
+                n++;
+            }
+            i++;
+        }
+        tmp = tmp->next;
+    }
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
@@ -685,6 +808,7 @@ int main(int argc, char **argv, char **envp)
 			cmds = store_cmds(line);
             headmaster = create_list(cmds, headmaster, error);
 			handle_quotes(&headmaster);
+            handle_redirections(&headmaster);
             handle_dollar(&headmaster, envcpy);
 			if(pipex(envcpy, &headmaster) == 1)
 			{
@@ -701,6 +825,7 @@ int main(int argc, char **argv, char **envp)
         }
 		change_error(envcpy, get_last_value());
 	}
+    rl_clear_history();
 	free_array(envcpy);
 	return 0;
 }
