@@ -663,6 +663,13 @@ char *get_name(char *args, int n)
     char *path;
 
     i = n;
+    if(!args)
+        return (NULL);
+    if(args[i] == '>' || args[i] == '<')
+    {
+        printf("minishell: syntax error near unexpected token `>'\n");
+        return (NULL);
+    }
     while(args[i] != '\0')
     {
         if (args[i] == '>' || args[i] == '<')
@@ -679,17 +686,15 @@ char *get_name(char *args, int n)
     return path;
 }
 
-int check_file(char **args, int i, int n)
+char  *check_file(char **args, int i, int n)
 {
-    int fd;
     char *tmp;
 
-    n += 1;
     printf("check_file\n");
     if (args[i][n] == '>' || args[i][n] == '<')
     {
         printf("minishell: syntax error near unexpected token `>'\n");
-        return (1);
+        return (NULL);
     }
     if (args[i][n] == '\0')
     {
@@ -697,14 +702,9 @@ int check_file(char **args, int i, int n)
         if (tmp == NULL)
         {
             printf("minishell: syntax error near unexpected token `newline'\n");
-            return (1);
+            return (NULL);
         }
-        fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-        if (fd == -1)
-        {
-            printf("minishell: %s: No such file or directory\n", tmp);
-            return (1);
-        }
+        return (tmp);
     }
     else if (args[i][n] != '\0')
     {
@@ -712,27 +712,17 @@ int check_file(char **args, int i, int n)
         if (tmp == NULL)
         {
             printf("minishell: syntax error near unexpected token `newline'\n");
-            return (1);
+            return (NULL);
         }
-        fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-        if (fd == -1)
-        {
-            printf("minishell: %s: No such file or directory\n", tmp);
-            return (1);
-        }
-        close(fd);
+        return (tmp);
     }
-    if (args[i + 1] == NULL)
-    {
-        printf("minishell: syntax error near unexpected token `newline'\n");
-        return (1);
-    }
-    return (0);
+    return (NULL);
 }
 
-void    handle_redirections(t_node **head)
+int    handle_redirections(t_node **head)
 {
     t_node *tmp;
+    char *path;
     int i;
     int n;
 
@@ -745,13 +735,23 @@ void    handle_redirections(t_node **head)
             n = 0;
             while(tmp->args[i][n])
             {
-                printf("args: %c\n", tmp->args[i][n]);
                 if(tmp->args[i][n] == '>' && tmp->quotes[i][n] == '0')
                 {
                     if(tmp->args[i][n + 1] == '>')
-                        tmp->append = check_file(tmp->args, i, n + 1);
+                    {
+                        path = check_file(tmp->args, i, n + 2);
+                        if (path == NULL)
+                            return (1);
+                        tmp->append = open(path, O_WRONLY | O_CREAT | O_APPEND, 0777);
+                    }
                     else
-                        tmp->output = check_file(tmp->args, i, n);
+                    {
+                        path = check_file(tmp->args, i, n + 1);
+                        if (path == NULL)
+                            return (1);
+                        tmp->output = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+                    }
+                    free(path);
                 }
                 n++;
             }
@@ -759,6 +759,7 @@ void    handle_redirections(t_node **head)
         }
         tmp = tmp->next;
     }
+    return (0);
 }
 
 int main(int argc, char **argv, char **envp)
@@ -808,20 +809,22 @@ int main(int argc, char **argv, char **envp)
 			cmds = store_cmds(line);
             headmaster = create_list(cmds, headmaster, error);
 			handle_quotes(&headmaster);
-            handle_redirections(&headmaster);
-            handle_dollar(&headmaster, envcpy);
-			if(pipex(envcpy, &headmaster) == 1)
-			{
-				free_list(&headmaster);
-				free_triple(cmds);
-				free(line);
-				free(written);
-				break ;
-			}
-			free_list(&headmaster);
-			free_triple(cmds);
-			free(line);
-			free(written);
+            if(handle_redirections(&headmaster) == 0)
+            {
+                handle_dollar(&headmaster, envcpy);
+                if (pipex(envcpy, &headmaster) == 1)
+                {
+                    free_list(&headmaster);
+                    free_triple(cmds);
+                    free(line);
+                    free(written);
+                    break;
+                }
+                free_list(&headmaster);
+                free_triple(cmds);
+                free(line);
+                free(written);
+            }
         }
 		change_error(envcpy, get_last_value());
 	}
