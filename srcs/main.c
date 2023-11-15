@@ -1,5 +1,7 @@
 #include "../minishell.h"
 
+int g_ec = 0;
+
 void	print_array(char **array)
 {
 	int i;
@@ -149,6 +151,38 @@ char *get_quotes(char *str)
 	return quotes;
 }
 
+int check_pipes(char *line, char *quotes)
+{
+	int i;
+	int pipes;
+
+	i = 0;
+	pipes = 0;
+	while (line[i])
+	{
+		if (line[i] == '|' && quotes[i] == '0')
+		{
+			pipes++;
+			if (pipes > 1)
+			{
+				printf("Error: empty pipe\n");
+				g_ec = 2;
+				return (1);
+			}
+		}
+		else if(line[i] != ' ' && line[i] != '\t' && quotes[i] == '0')
+			pipes = 0;
+		i++;
+	}
+	if(pipes == 1)
+	{
+		printf("Error: empty pipe\n");
+		g_ec = 2;
+		return (1);
+	}
+	return 0;
+}
+
 char ***store_cmds(char *line)
 {
 	char ***cmds;
@@ -160,6 +194,11 @@ char ***store_cmds(char *line)
 	if(!line)
 		return (NULL);
 	quotes = get_quotes(line);
+	if (check_pipes(line, quotes) == 1)
+	{
+		free(quotes);
+		return (NULL);
+	}
 	aux = ft_split_quote(line, quotes, '|');
 	if(!aux)
 		return (NULL);
@@ -363,42 +402,6 @@ void	builtin(char **envpcpy, char **cmd, t_node **head)
 		shell_env(envpcpy, head);
 }
 
-/*
-int child_one(char **envp, char **cmd, char *path, t_node **head) {
-    int fd[2];
-    pid_t pid;
-
-    if (pipe(fd) == -1)
-        exit(0);
-
-    change_error(envp, 0);
-    pid = fork();
-    if (pid == -1)
-        exit(0);
-    else if (pid == 0) {
-        close(fd[0]);
-        dup2(fd[1], STDOUT_FILENO);
-        close(fd[1]);
-        if (is_builtin(cmd[0]) == 1)
-            builtin(envp, cmd, head);
-        else {
-            if (execve(path, cmd, envp) == -1) {
-                write_error(head);
-                exit(0);
-            }
-        }
-        return (1);
-    } else {
-        close(fd[1]);
-        dup2(fd[0], STDIN_FILENO);
-        close(fd[0]);
-        wait_pid(pid, head);
-    }
-    wait(NULL);
-    return 0;
-}
- */
-
 int child_one(char **envp, char **cmd, char *path, t_node **head)
 {
     int fd[2];
@@ -410,9 +413,9 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
     if (pipe(fd) == -1)
         exit(0);
 
-    change_error(envp, 0);
     pid = fork();
-    if (pid == -1)
+	sig_handler_block();
+	if (pid == -1)
         exit(0);
     else if (pid == 0)
     {
@@ -424,7 +427,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
         else
         {
             if (execve(path, cmd, envp) == -1)
-                exit(0);
+                return (1);
         }
         return (1);
     }
@@ -434,7 +437,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
         dup2(fd[0], STDIN_FILENO);
         close(fd[0]);
         waitpid(pid, &status, 0);// Wait for the child process to finish
-        if (WIFEXITED(status))
+        if(is_builtin(cmd[0]) == 0 && WIFEXITED(status))
         {
             exit_status = WEXITSTATUS(status);
             exit_status_str = ft_itoa(exit_status);
@@ -446,9 +449,10 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
                 write((*head)->error, "\n", 1);
             }
             free(exit_status_str);
-        }
-    }
-    return 0;
+			g_ec = get_last_value();
+		}
+	}
+    return (0);
 }
 
 int	node_count(t_node **head)
@@ -466,61 +470,55 @@ int	node_count(t_node **head)
 	return i;
 }
 
-void    write_error(t_node **head)
-{
-    char *error;
-
-    error = ft_itoa(errno);
-    write((* head)->error, error, ft_strlen(error));
-    write((* head)->error, "\n", 1);
-    free(error);
-}
-
-void    execute(char **envpcpy, char **cmd, char *path, t_node *head)
+int    execute(char **envpcpy, char **cmd, char *path, t_node *head)
 {
     pid_t pid;
     int status;
     int exit_status;
     char *exit_status_str;
 
-    if(access(path, F_OK) == 0 || is_builtin(cmd[0]) == 1)
-    {
-        if (is_builtin(cmd[0]) == 1)
-                builtin(envpcpy, cmd, (t_node **) &head);
-        else
-        {
-            pid = fork();
-            if (pid == -1)
-                exit(0);
-            else if (pid == 0)
-            {
-                execve(path, cmd, envpcpy);
-            }
-            else
-            {
-                waitpid(pid, &status, 0);// Wait for the child process to finish
-                if (WIFEXITED(status))
-                {
-                    exit_status = WEXITSTATUS(status);
-                    exit_status_str = ft_itoa(exit_status);
-                    if(exit_status == 0)
-                        write(head->error, "0\n", 2);
-                    else
-                    {
-                        write(head->error, exit_status_str, ft_strlen(exit_status_str));
-                        write(head->error, "\n", 1);
-                    }
-                    free(exit_status_str);
-                    // Return the exit status of the child process
-                }
-            }
-        }
-    }
-    else
-    {
-        write(head->error, "127\n", 4);
-        printf("minishell: %s: command not found\n", head->cmd);
-    }
+	if(((path != NULL && (access(path, F_OK) == 0)) || is_builtin(cmd[0]) == 1))
+	{
+		pid = fork();
+		sig_handler_block();
+		if (pid == -1)
+			exit(0);
+		else if (pid == 0)
+		{
+			if (is_builtin(cmd[0]) == 1)
+				builtin(envpcpy, cmd, &head);
+			else
+			{
+				if (execve(path, cmd, envpcpy) == -1)
+					exit(0);
+			}
+			return (1);
+		}
+		else
+		{
+			waitpid(pid, &status, 0);
+            if(is_builtin(cmd[0]) == 0 && WIFEXITED(status))
+			{
+				exit_status = WEXITSTATUS(status);
+				exit_status_str = ft_itoa(exit_status);
+				if (exit_status == 0)
+					write(head->error, "0\n", 2);
+				else
+				{
+					write(head->error, exit_status_str, ft_strlen(exit_status_str));
+					write(head->error, "\n", 1);
+				}
+				free(exit_status_str);
+                g_ec = get_last_value();
+			}
+		}
+	}
+	else
+	{
+		printf("minishell: %s: command not found\n", cmd[0]);
+		g_ec = 127;
+	}
+	return (0);
 }
 
 int get_last_value()
@@ -577,13 +575,11 @@ int pipex(char **envpcpy, t_node **head)
                 free_array(paths);
                 return (1);
             }
-            else
-                write_error(head);
         }
 		else
 		{
 			printf("minishell: %s: command not found\n", (*tmp).cmd);
-            write((* head)->error, "127\n", 4);
+			g_ec = 127;
 		}
 		free(path);
 		tmp = tmp->next;
@@ -591,10 +587,14 @@ int pipex(char **envpcpy, t_node **head)
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	dup2(stdout, STDOUT_FILENO);
-    execute(envpcpy, cmd, path, tmp);
+	if (execute(envpcpy, cmd, path, *head) == 1)
+	{
+		free(path);
+		free_array(paths);
+		return (1);
+	}
     wait(NULL);
 	dup2(stdin, STDIN_FILENO);
-    change_error(envpcpy, get_last_value());
 	free(path);
 	free_array(paths);
 	return 0;
@@ -638,6 +638,129 @@ int create_error_file()
     return file;
 }
 
+char *ft_strndup(char *str, int n)
+{
+    int i;
+    char *tmp;
+
+    i = 0;
+    tmp = (char *)malloc(sizeof(char) * (n + 1));
+    while(i < n)
+    {
+        tmp[i] = str[i];
+        i++;
+    }
+    tmp[i] = '\0';
+    return tmp;
+}
+
+char *get_name(char *args, int n)
+{
+    int i;
+    char tmp[1024];
+    char *tmp2;
+    char *tmp3;
+    char *path;
+
+    i = n;
+    while(args[i] != '\0')
+    {
+        if (args[i] == '>' || args[i] == '<')
+            break;
+        i++;
+    }
+    getcwd(tmp, sizeof(tmp));
+    tmp2 = ft_strndup(&args[n], i - n);
+    tmp3 = ft_strjoin("/", tmp2);
+    path = ft_strjoin(tmp, tmp3);
+    printf("path: %s\n", path);
+    free(tmp3);
+    free(tmp2);
+    return path;
+}
+
+int check_file(char **args, int i, int n)
+{
+    int fd;
+    char *tmp;
+
+    n += 1;
+    printf("check_file\n");
+    if (args[i][n] == '>' || args[i][n] == '<')
+    {
+        printf("minishell: syntax error near unexpected token `>'\n");
+        return (1);
+    }
+    if (args[i][n] == '\0')
+    {
+        tmp = get_name(args[i + 1], 0);
+        if (tmp == NULL)
+        {
+            printf("minishell: syntax error near unexpected token `newline'\n");
+            return (1);
+        }
+        fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (fd == -1)
+        {
+            printf("minishell: %s: No such file or directory\n", tmp);
+            return (1);
+        }
+    }
+    else if (args[i][n] != '\0')
+    {
+        tmp = get_name(args[i], n);
+        if (tmp == NULL)
+        {
+            printf("minishell: syntax error near unexpected token `newline'\n");
+            return (1);
+        }
+        fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+        if (fd == -1)
+        {
+            printf("minishell: %s: No such file or directory\n", tmp);
+            return (1);
+        }
+        close(fd);
+    }
+    if (args[i + 1] == NULL)
+    {
+        printf("minishell: syntax error near unexpected token `newline'\n");
+        return (1);
+    }
+    return (0);
+}
+
+void    handle_redirections(t_node **head)
+{
+    t_node *tmp;
+    int i;
+    int n;
+
+    tmp = *head;
+    while(tmp)
+    {
+        i = 0;
+        while(tmp->args[i])
+        {
+            n = 0;
+            while(tmp->args[i][n])
+            {
+                printf("args: %c\n", tmp->args[i][n]);
+                if(tmp->args[i][n] == '>' && tmp->quotes[i][n] == '0')
+                {
+                    if(tmp->args[i][n + 1] == '>')
+                        tmp->append = check_file(tmp->args, i, n + 1);
+                    else
+                        tmp->output = check_file(tmp->args, i, n);
+                }
+                n++;
+            }
+            i++;
+        }
+        tmp = tmp->next;
+    }
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
@@ -646,6 +769,7 @@ int main(int argc, char **argv, char **envp)
 	char ***cmds;
     char **envcpy;
     int error;
+	char *errado;
 
     t_node *headmaster;
 
@@ -664,7 +788,12 @@ int main(int argc, char **argv, char **envp)
 		written = getcwd(NULL, 0);
 		tmp = ft_strjoin(written, "$ ");
 		line = readline(tmp);
+		errado = ft_itoa(g_ec);
+		write(error, errado, ft_strlen(errado));
+		write(error, "\n", 1);
+		change_error(envcpy, get_last_value());
 		free(tmp);
+		free(errado);
 		if(!line)
 		{
 			//control D
@@ -679,12 +808,14 @@ int main(int argc, char **argv, char **envp)
 			cmds = store_cmds(line);
             headmaster = create_list(cmds, headmaster, error);
 			handle_quotes(&headmaster);
+            handle_redirections(&headmaster);
             handle_dollar(&headmaster, envcpy);
 			if(pipex(envcpy, &headmaster) == 1)
 			{
 				free_list(&headmaster);
 				free_triple(cmds);
 				free(line);
+				free(written);
 				break ;
 			}
 			free_list(&headmaster);
@@ -692,7 +823,9 @@ int main(int argc, char **argv, char **envp)
 			free(line);
 			free(written);
         }
+		change_error(envcpy, get_last_value());
 	}
+    rl_clear_history();
 	free_array(envcpy);
 	return 0;
 }

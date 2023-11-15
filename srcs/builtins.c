@@ -1,5 +1,7 @@
 #include "../minishell.h"
 
+extern int	g_ec;
+
 char *ft_itoa(int n)
 {
 	char *str;
@@ -28,15 +30,18 @@ char *ft_itoa(int n)
 void	change_error(char **envcpy, int value)
 {
 	char *aux;
+	char *aux2;
 
 	free(envcpy[0]);
 	if (value == 0)
 		envcpy[0] = ft_strdup("?=0");
 	else
 	{
-		aux = ft_strjoin("?=", ft_itoa(value));
+		aux2 = ft_itoa(value);
+		aux = ft_strjoin("?=", aux2);
 		envcpy[0] = ft_strdup(aux);
 		free(aux);
+		free(aux2);
 	}
 }
 
@@ -62,7 +67,7 @@ void shell_echo(t_node **head)
 	}
 	if (break_flag == 0)
 		printf("\n");
-	write((* head)->error, "0\n", 2);
+    write((* head)->error, "0\n", 2);
 }
 
 int	ft_strstr(char *str, char t_find)
@@ -84,6 +89,7 @@ void	shell_env(char **envpcpy, t_node **head)
 	int i;
 
 	i = 1;
+	(void)head;
 	while (envpcpy[i])
 	{
 		if (ft_strstr(envpcpy[i], '=') == 1)
@@ -97,6 +103,7 @@ void	shell_pwd(char **envpcpy, t_node **head)
 {
 	char *cwd;
 
+	(void)head;
 	cwd = ft_getenv("PWD", envpcpy);
 	printf("%s\n", cwd);
 	free(cwd);
@@ -254,7 +261,6 @@ void	shell_export(t_node **node, char **envpcpy)
 	char *aux;
 
 	i = 1;
-	printf("export\n");
 	if(!(*node)->args[i])
 	{
 		print_ext_set(envpcpy);
@@ -314,12 +320,11 @@ void	til(t_node **head, char **envpcpy)
 
 void	shell_cd(t_node **head, char **envpcpy)
 {
-	printf("cd\n");
 	if ((* head)->args && (* head)->args[1] && (* head)->args[2])
 	{
 		printf("minishell: cd: too many arguments\n");
         write((* head)->error, "1\n", 2);
-	}
+    }
 	else if (!(* head)->args[1] || ft_strcmp((* head)->args[1], "~") == 0)
 	{
 		if (chdir(getenv("HOME")) != 0)
@@ -353,7 +358,7 @@ void	shell_cd(t_node **head, char **envpcpy)
 	else if (chdir((* head)->args[1]) != 0)
 	{
 		printf("minishell: cd : %s: No such file or directory\n", (* head)->args[1]);
-        write((* head)->error, "1\n", 2);
+        write((* head)->error, "127\n", 4);
 	}
 	else
 	{
@@ -370,7 +375,6 @@ void	shell_unset(t_node **node, char **envpcpy)
 	int k;
 
 	i = 1;
-	printf("unset\n");
 	while ((*node)->args[i])
 	{
 		j = 0;
@@ -378,7 +382,6 @@ void	shell_unset(t_node **node, char **envpcpy)
 		{
 			if (ft_strncmp(envpcpy[j], (*node)->args[i], ft_strlen((*node)->args[i])) == 0)
 			{
-				printf("envpcpy[%d] = %s\n", j, envpcpy[j]);
 				k = j;
 				while (envpcpy[k])
 				{
