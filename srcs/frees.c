@@ -54,3 +54,17 @@ void	free_array(char **array)
 	}
 	free(array);
 }
+
+void	free_lines(char **array)
+{
+	int i;
+
+	i = 0;
+	if(!array)
+		return ;
+	while (array[i])
+	{
+		free(array[i]);
+		i++;
+	}
+}

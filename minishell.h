@@ -114,9 +114,11 @@ size_t	ft_strlcpy_get(char *dst, char *src, size_t size);
 int		get_last_value();
 
 char *ft_strndup(char *str, int n);
-char *get_name(char *args, int n);
-char  *check_file(char **args, int i, int n);
+char *get_name(char **args, int a, int n);
+char  *check_file(t_node *head, int i, int n);
 int    handle_redirections(t_node **head);
-
+char* removeCharAtIndex(char* str, int index);
+void	free_lines(char **array);
+char **cpy_array(char **array);
 
 #endif //MINISHELL_H
