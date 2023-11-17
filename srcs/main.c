@@ -638,130 +638,6 @@ int create_error_file()
     return file;
 }
 
-char *ft_strndup(char *str, int n)
-{
-    int i;
-    char *tmp;
-
-    i = 0;
-    tmp = (char *)malloc(sizeof(char) * (n + 1));
-    while(i < n)
-    {
-        tmp[i] = str[i];
-        i++;
-    }
-    tmp[i] = '\0';
-    return tmp;
-}
-
-char *get_name(char *args, int n)
-{
-    int i;
-    char tmp[1024];
-    char *tmp2;
-    char *tmp3;
-    char *path;
-
-    i = n;
-    if(!args)
-        return (NULL);
-    if(args[i] == '>' || args[i] == '<')
-    {
-        printf("minishell: syntax error near unexpected token `>'\n");
-        return (NULL);
-    }
-    while(args[i] != '\0')
-    {
-        if (args[i] == '>' || args[i] == '<')
-            break;
-        i++;
-    }
-    getcwd(tmp, sizeof(tmp));
-    tmp2 = ft_strndup(&args[n], i - n);
-    tmp3 = ft_strjoin("/", tmp2);
-    path = ft_strjoin(tmp, tmp3);
-    printf("path: %s\n", path);
-    free(tmp3);
-    free(tmp2);
-    return path;
-}
-
-char  *check_file(char **args, int i, int n)
-{
-    char *tmp;
-
-    printf("check_file\n");
-    if (args[i][n] == '>' || args[i][n] == '<')
-    {
-        printf("minishell: syntax error near unexpected token `>'\n");
-        return (NULL);
-    }
-    if (args[i][n] == '\0')
-    {
-        tmp = get_name(args[i + 1], 0);
-        if (tmp == NULL)
-        {
-            printf("minishell: syntax error near unexpected token `newline'\n");
-            return (NULL);
-        }
-        return (tmp);
-    }
-    else if (args[i][n] != '\0')
-    {
-        tmp = get_name(args[i], n);
-        if (tmp == NULL)
-        {
-            printf("minishell: syntax error near unexpected token `newline'\n");
-            return (NULL);
-        }
-        return (tmp);
-    }
-    return (NULL);
-}
-
-int    handle_redirections(t_node **head)
-{
-    t_node *tmp;
-    char *path;
-    int i;
-    int n;
-
-    tmp = *head;
-    while(tmp)
-    {
-        i = 0;
-        while(tmp->args[i])
-        {
-            n = 0;
-            while(tmp->args[i][n])
-            {
-                if(tmp->args[i][n] == '>' && tmp->quotes[i][n] == '0')
-                {
-                    if(tmp->args[i][n + 1] == '>')
-                    {
-                        path = check_file(tmp->args, i, n + 2);
-                        if (path == NULL)
-                            return (1);
-                        tmp->append = open(path, O_WRONLY | O_CREAT | O_APPEND, 0777);
-                    }
-                    else
-                    {
-                        path = check_file(tmp->args, i, n + 1);
-                        if (path == NULL)
-                            return (1);
-                        tmp->output = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-                    }
-                    free(path);
-                }
-                n++;
-            }
-            i++;
-        }
-        tmp = tmp->next;
-    }
-    return (0);
-}
-
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
@@ -820,11 +696,11 @@ int main(int argc, char **argv, char **envp)
                     free(written);
                     break;
                 }
-                free_list(&headmaster);
-                free_triple(cmds);
-                free(line);
-                free(written);
             }
+			free_list(&headmaster);
+			free_triple(cmds);
+			free(line);
+			free(written);
         }
 		change_error(envcpy, get_last_value());
 	}

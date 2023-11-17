@@ -113,9 +113,10 @@ int     ft_atoi(char *str);
 size_t	ft_strlcpy_get(char *dst, char *src, size_t size);
 int		get_last_value();
 
-
-
-
+char *ft_strndup(char *str, int n);
+char *get_name(char *args, int n);
+char  *check_file(char **args, int i, int n);
+int    handle_redirections(t_node **head);
 
 
 #endif //MINISHELL_H
