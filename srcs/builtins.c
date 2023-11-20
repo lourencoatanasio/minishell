@@ -45,11 +45,36 @@ void	change_error(char **envcpy, int value)
 	}
 }
 
+void print_args(t_node **head, int i)
+{
+	t_node *tmp;
+	//printf("echo :\n");
+	print_list(head);
+
+	//printf("tmp->args[i] = %s\n", tmp->args[i]);
+	tmp = *head;
+	while (tmp->args[i])
+	{
+		printf("print_list_quote %d = %s\n", i, tmp->quotes[i]);
+		printf("print_list_args %d = %s\n", i, tmp->args[i]);
+		i++;
+	}
+	tmp = tmp->next;
+	while (tmp->args[i]) // nao sei o que o echo anda prai a fazer
+	{
+		printf("%s", tmp->args[i]);
+		if (tmp->args[i + 1])
+			printf(" ");
+		i++;
+	}
+}
+
 void shell_echo(t_node **head)
 {
 	int i = 1;
 	int break_flag = 0;
 
+	//printf("ola\n");
 	if ((*head)->args[1] && (*head)->args[1][0] == '-')
 	{
 		if ((*head)->args[1][1] == 'n' && (*head)->args[1][2] == '\0')
@@ -58,13 +83,8 @@ void shell_echo(t_node **head)
 			break_flag = 1;
 		}
 	}
-	while ((*head)->args[i])
-	{
-		printf("%s", (*head)->args[i]);
-		if ((*head)->args[i + 1])
-			printf(" ");
-		i++;
-	}
+	//printf("ola\n");
+	print_args(head, i);
 	if (break_flag == 0)
 		printf("\n");
     write((* head)->error, "0\n", 2);

@@ -72,12 +72,10 @@ char *get_name(char **args, int a, int n)
 		j++;
 	}
 	name[j] = '\0';
-	printf("args: %s\n", args[a]);
 	getcwd(tmp, sizeof(tmp));
 	tmp2 = ft_strdup(name);
 	tmp3 = ft_strjoin("/", tmp2);
 	path = ft_strjoin(tmp, tmp3);
-	printf("path: %s\n", path);
 	free(tmp3);
 	free(tmp2);
 	return path;
@@ -105,7 +103,6 @@ char **removeLineAtIndex(char **lines, int n)
 		i++;
 	}
 	tmp[j] = NULL;
-	print_array(tmp);
 	free_array(lines);
 	return tmp;
 }
@@ -115,7 +112,6 @@ char  *check_file(t_node *head, int i, int n)
 	char *tmp;
 	char **tmp2;
 
-	printf("check_file\n");
 	if (head->args[i][n] == '>')
 	{
 		if(head->args[i][n + 1] == '>')
@@ -155,7 +151,6 @@ char  *check_file(t_node *head, int i, int n)
 	if (head->args[i][n] != '\0') // means that the file name is in the same arg
 	{
 		tmp = get_name(head->args, i, n);
-		printf("head->args[i]: %s\n", head->args[i]);
 		if(head->args[i][0] == '\0')
 		{
 			tmp2 = cpy_array(head->args);
@@ -213,11 +208,9 @@ int check_content(char *path)
 
 int	makeHereDoc(char *limit)
 {
-	int i;
 	int fd;
 	char *line;
 
-	i = 0;
 	printf("makeHereDoc\n");
 	if(check_content("./.heredoc") == 1)
 		unlink("./.heredoc");

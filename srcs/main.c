@@ -374,7 +374,7 @@ int	is_builtin(char *str)
 	if (ft_strncmp(str, "echo", 5) == 0)
 		return (1);
 	if (ft_strncmp(str, "cd", 3) == 0)
-		return (1);
+		return (2);
 	if (ft_strncmp(str, "pwd", 4) == 0)
 		return (1);
 	if (ft_strncmp(str, "export", 7) == 0)
@@ -422,7 +422,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
         close(fd[0]);
         dup2(fd[1], STDOUT_FILENO);
         close(fd[1]);
-        if (is_builtin(cmd[0]) == 1)
+        if (is_builtin(cmd[0]) == 1 || is_builtin(cmd[0]) == 2)
             builtin(envp, cmd, head);
         else
         {
@@ -477,7 +477,8 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node *head)
     int exit_status;
     char *exit_status_str;
 
-	if(((path != NULL && (access(path, F_OK) == 0)) || is_builtin(cmd[0]) == 1))
+
+	if(((path != NULL && (access(path, F_OK) == 0)) || is_builtin(cmd[0]) != 0))
 	{
 		pid = fork();
 		sig_handler_block();
@@ -485,8 +486,10 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node *head)
 			exit(0);
 		else if (pid == 0)
 		{
-			if (is_builtin(cmd[0]) == 1)
+			if (is_builtin(cmd[0]) == 1) {
+				print_list(&head);
 				builtin(envpcpy, cmd, &head);
+			}
 			else
 			{
 				if (execve(path, cmd, envpcpy) == -1)
@@ -548,6 +551,22 @@ int get_last_value()
     return (r);
 }
 
+//void run_shell_cd(char **envpcpy, char **cmd, t_node **head)
+//{
+//	if (ft_strncmp(cmd[0], "cd", 3) == 0)
+//	{
+//		if (cmd[1] == NULL)
+//			shell_cd(envpcpy, head, NULL);
+//		else if (cmd[1] != NULL && cmd[2] == NULL)
+//			shell_cd(envpcpy, head, cmd[1]);
+//		else
+//		{
+//			printf("minishell: cd: too many arguments\n");
+//			g_ec = 1;
+//		}
+//	}
+//}
+
 int pipex(char **envpcpy, t_node **head)
 {
 	char **paths;
@@ -567,7 +586,7 @@ int pipex(char **envpcpy, t_node **head)
 	{
 		cmd = (*tmp).args;
 		path = find_path(paths, (*tmp).cmd);
-        if(access(path, F_OK) == 0 || is_builtin(cmd[0]) == 1)
+        if(access(path, F_OK) == 0 || is_builtin(cmd[0]) != 0)
         {
             if (child_one(envpcpy, cmd, path, &tmp) == 1)
             {
@@ -587,10 +606,13 @@ int pipex(char **envpcpy, t_node **head)
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
 	dup2(stdout, STDOUT_FILENO);
-	if (execute(envpcpy, cmd, path, *head) == 1)
+	if(node_count(head) == 1 && is_builtin(cmd[0]) == 2)
+		shell_cd(head, envpcpy);
+	else if (execute(envpcpy, cmd, path, *head) == 1)
 	{
 		free(path);
 		free_array(paths);
+		dup2(stdin, STDIN_FILENO);
 		return (1);
 	}
     wait(NULL);
