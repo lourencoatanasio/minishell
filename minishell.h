@@ -30,6 +30,7 @@ typedef struct s_node
 	int output;
 	int append;
 	int here_doc;
+	int pipe;
 	struct s_node	*next;
 }		t_node;
 
@@ -94,7 +95,7 @@ int ft_strfcmp(char *s1, char *s2);
 int	get_num_words_quote(char *str, char *quotes, char c);
 char	*get_word_quote(char *str, char *quotes, char c, int n);
 char **ft_split_quote(char *str, char *quotes, char c);
-int	is_builtin(char *str);
+int	is_builtin(char *str, char **args);
 void	builtin(char **envpcpy, char **cmd, t_node **head);
 
 int ft_isalnum(int c);

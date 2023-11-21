@@ -47,23 +47,10 @@ void	change_error(char **envcpy, int value)
 
 void print_args(t_node **head, int i)
 {
-	t_node *tmp;
-	//printf("echo :\n");
-	print_list(head);
-
-	//printf("tmp->args[i] = %s\n", tmp->args[i]);
-	tmp = *head;
-	while (tmp->args[i])
+	while ((*head)->args[i]) // nao sei o que o echo anda prai a fazer
 	{
-		printf("print_list_quote %d = %s\n", i, tmp->quotes[i]);
-		printf("print_list_args %d = %s\n", i, tmp->args[i]);
-		i++;
-	}
-	tmp = tmp->next;
-	while (tmp->args[i]) // nao sei o que o echo anda prai a fazer
-	{
-		printf("%s", tmp->args[i]);
-		if (tmp->args[i + 1])
+		printf("%s", (*head)->args[i]);
+		if ((*head)->args[i + 1])
 			printf(" ");
 		i++;
 	}
@@ -74,7 +61,6 @@ void shell_echo(t_node **head)
 	int i = 1;
 	int break_flag = 0;
 
-	//printf("ola\n");
 	if ((*head)->args[1] && (*head)->args[1][0] == '-')
 	{
 		if ((*head)->args[1][1] == 'n' && (*head)->args[1][2] == '\0')
@@ -83,7 +69,6 @@ void shell_echo(t_node **head)
 			break_flag = 1;
 		}
 	}
-	//printf("ola\n");
 	print_args(head, i);
 	if (break_flag == 0)
 		printf("\n");
@@ -363,20 +348,6 @@ void	shell_cd(t_node **head, char **envpcpy)
 	}
 	else if ((* head)->args[1][0] == '~' && (* head)->args[1][1] == '/')
 		til(head, envpcpy);
-	else if (ft_strcmp((* head)->args[1], "-") == 0)
-	{
-		if (chdir(getenv("OLDPWD")) != 0)
-		{
-			printf("minishell: cd: OLDPWD not set\n");
-            write((* head)->error, "1\n", 2);
-		}
-		else
-		{
-			ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
-			ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
-            write((* head)->error, "0\n", 2);
-		}
-	}
 	else if (chdir((* head)->args[1]) != 0)
 	{
 		printf("minishell: cd : %s: No such file or directory\n", (* head)->args[1]);
