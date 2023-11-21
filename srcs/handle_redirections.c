@@ -123,7 +123,7 @@ char  *check_file(t_node *head, int i, int n)
 				return (NULL);
 			}
 			head->args[i] = removeCharAtIndex(head->args[i], n + 1);
-			head->quotes[i] = removeCharAtIndex(head->args[i], n + 1);
+			head->quotes[i] = removeCharAtIndex(head->quotes[i], n + 1);
 		}
 	}
 	if (head->args[i][n] == '<')
@@ -136,12 +136,11 @@ char  *check_file(t_node *head, int i, int n)
 				return (NULL);
 			}
 			head->args[i] = removeCharAtIndex(head->args[i], n + 1);
-			head->quotes[i] = removeCharAtIndex(head->args[i], n + 1);
-
+			head->quotes[i] = removeCharAtIndex(head->quotes[i], n + 1);
 		}
 	}
 	head->args[i] = removeCharAtIndex(head->args[i], n);
-	head->quotes[i] = removeCharAtIndex(head->args[i], n);
+	head->quotes[i] = removeCharAtIndex(head->quotes[i], n);
 	if(head->args[i][0] == '\0' && head->args[i + 1] != NULL)
 	{
 		tmp2 = cpy_array(head->args);
@@ -253,7 +252,6 @@ int    handle_redirections(t_node **head)
 	int n;
 
 	tmp = *head;
-	print_list(&tmp);
 	while (tmp != NULL)
 	{
 		i = 0;
@@ -264,13 +262,6 @@ int    handle_redirections(t_node **head)
 			{
 				if (tmp->args[i][n] == '>' && tmp->quotes[i][n] == '0')
 				{
-					printf("tmp->args[i] = %s\n", tmp->args[i]);
-					printf("tmp->args[i][n] = %c\n", tmp->args[i][n]);
-					printf("tmp->args[i][n + 1] = %c\n", tmp->args[i][n + 1]);
-					printf("tmp->quotes[i][n] = %c\n", tmp->quotes[i][n]);
-					printf("tmp->quotes[i][n + 1] = %c\n", tmp->quotes[i][n + 1]);
-					printf("tmp->quotes[i] = %s\n", tmp->quotes[i]);
-					printf("i = %d\n", i);
 					if (tmp->args[i][n + 1] == '>' && tmp->quotes[i][n] == '0')
 					{
 						path = check_file(tmp, i, n);

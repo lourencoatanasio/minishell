@@ -499,23 +499,6 @@ void inputs(t_node **head, int *fd)
 	close(fd[1]);
 	dup2(fd[0], STDIN_FILENO);
 	close(fd[0]);
-//	else
-//	{
-//		printf("4\n");
-//		close(fd[1]);
-//		if((*head)->input != 0)
-//		{
-//			printf("5\n");
-//			dup2((*head)->input, STDIN_FILENO);
-//			close((*head)->input);
-//		}
-//		else if((*head)->here_doc != 0)
-//		{
-//			dup2((*head)->here_doc, STDIN_FILENO);
-//			close((*head)->here_doc);
-//		}
-//		close(fd[0]);
-//	}
 }
 
 int child_one(char **envp, char **cmd, char *path, t_node **head)
@@ -557,11 +540,10 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
     else
     {
 		inputs(head, fd);
-//		close(fd[0]);
         waitpid(pid, &status, 0);// Wait for the child process to finish
 		exit_status(head, status, cmd);
 	}
-    return (fd[0]);
+    return (0);
 }
 
 int    execute(char **envpcpy, char **cmd, char *path, t_node **head)
@@ -572,10 +554,6 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node **head)
 	if(((path != NULL && (access(path, F_OK) == 0)) || is_builtin(cmd[0], (*head)->args) != 0))
 	{
 		sig_handler_block();
-		printf("(*head)->input = %d\n", (*head)->input);
-		printf("(*head)->here_doc = %d\n", (*head)->here_doc);
-		printf("(*head)->output = %d\n", (*head)->output);
-		printf("(*head)->append = %d\n", (*head)->append);
 		if((*head)->input != 0 || (*head)->here_doc != 0)
 		{
 			if((*head)->input != 0)
@@ -625,7 +603,6 @@ int pipex(char **envpcpy, t_node **head)
 	t_node *tmp;
 	int stdout;
 	int stdin;
-	int pass;
 
 	if (!(*head))
 		return 0;
@@ -639,13 +616,12 @@ int pipex(char **envpcpy, t_node **head)
 		path = find_path(paths, (*tmp).cmd);
         if(access(path, F_OK) == 0 || is_builtin(cmd[0], (*head)->args) != 0)
         {
-			pass = child_one(envpcpy, cmd, path, &tmp);
-			if (pass == 1)
-            {
-                free(path);
-                free_array(paths);
-                return (1);
-            }
+			if (child_one(envpcpy, cmd, path, &tmp) == 1)
+			{
+				free(path);
+				free_array(paths);
+				return (1);
+			}
         }
 		else
 		{
@@ -657,14 +633,21 @@ int pipex(char **envpcpy, t_node **head)
 	}
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
-	(*tmp).pipe = pass;
-	if(node_count(head) == 1 && is_builtin(cmd[0], (*head)->args) == 2)
-		builtin(envpcpy, cmd, head);
-	else if (execute(envpcpy, cmd, path, &tmp) == 1)
+	if(access(path, F_OK) == 0 || is_builtin(cmd[0], (*head)->args) != 0)
 	{
-		free(path);
-		free_array(paths);
-		return (1);
+		if(node_count(head) == 1 && is_builtin(cmd[0], (*head)->args) == 2)
+			builtin(envpcpy, cmd, head);
+		else if (execute(envpcpy, cmd, path, &tmp) == 1)
+		{
+			free(path);
+			free_array(paths);
+			return (1);
+		}
+	}
+	else
+	{
+		printf("minishell: %s: command not found\n", (*tmp).cmd);
+		g_ec = 127;
 	}
     wait(NULL);
 	dup2(stdout, STDOUT_FILENO);
@@ -760,8 +743,7 @@ int main(int argc, char **argv, char **envp)
 		free(errado);
 		if(!line)
 		{
-			//control D
-            printf("exit\n");
+			printf("exit\n");
 			free(written);
 			free(line);
 			break;
