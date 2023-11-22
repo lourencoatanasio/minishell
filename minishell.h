@@ -65,7 +65,7 @@ void print_list(t_node **head);
 int child_one(char **envp, char **cmd, char *path, t_node **head);
 void	sig_handler(void);
 void			sig_handler_block(void);
-char **cutString(char *str, int position);
+char	**cutstring(char *str, int position);
 char *get_name_env(int i, char **envcpy);
 char *cut_name(char *str);
 void handle_dollar(t_node **head, char **envcpy);

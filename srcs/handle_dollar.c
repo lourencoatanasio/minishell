@@ -1,153 +1,175 @@
 #include "../minishell.h"
 
-char** cutString(char *str, int position)
+char	**cutstring(char *str, int position)
 {
-	char** result = (char**)malloc(sizeof(char*) * 2);
-	result[0] = (char*)malloc(sizeof(char) * (position + 1));
-	result[1] = (char*)malloc(sizeof(char) * (ft_strlen(str) - position + 1));
+	char	**result;
+
+	result = (char **)malloc(sizeof(char *) * 2);
+	result[0] = (char *)malloc(sizeof(char) * (position + 1));
+	result[1] = (char *)malloc(sizeof(char) * (ft_strlen(str) - position + 1));
 	ft_strlcpy(result[0], str, position + 1);
 	ft_strlcpy(result[1], str + position + 1, ft_strlen(str) - position + 1);
-	return result;
+	return (result);
 }
 
-char *get_name_env(int i, char **envcpy)
+char	*get_name_env(int i, char **envcpy)
 {
-	int n;
-	char *env;
+	int		n;
+	char	*env;
 
-	if(i == -1)
-		return NULL;
+	if (i == -1)
+		return (NULL);
 	n = 0;
-	while(envcpy[i][n] != '=')
+	while (envcpy[i][n] != '=')
 		n++;
 	env = (char *)malloc(sizeof(char) * (n + 1));
 	n = 0;
-	while(envcpy[i][n] != '=')
+	while (envcpy[i][n] != '=')
 	{
 		env[n] = envcpy[i][n];
 		n++;
 	}
 	env[n] = '\0';
-	return env;
+	return (env);
 }
 
-char *cut_name(char *str)
+void	cut_name_support(int *i, char *str, char *result)
 {
-	char *result;
-	int i;
-	int n;
-	int c;
-
-	i = 0;
-	n = 0;
-	c = 0;
-	while((str[i] != '\0' && str[i] != '$' && ft_isalnum(str[i]) == 0) || str[i] == '_' || str[i] == '?')
-    {
-        i++;
-        n++;
-		if(str[i] == '?')
-			break ;
-    }
-	if(str[i] == '\0')
-		return "";
-	while (str[i] != '\0')
-		i++;
-	result = (char *)malloc(sizeof(char) * (i - n + 2));
-	while(n <= i)
+	while (i[1] <= i[0])
 	{
-		result[c] = str[n];
-		n++;
-		c++;
+		result[i[2]] = str[i[1]];
+		i[1]++;
+		i[2]++;
 	}
-	result[c] = '\0';
+	result[i[2]] = '\0';
+}
+
+char	*cut_name(char *str)
+{
+	char	*result;
+	int		i[3];
+
+	i[0] = 0;
+	i[1] = 0;
+	i[2] = 0;
+	while ((str[i[0]] != '\0' && str[i[0]] != '$'
+			&& ft_isalnum(str[i[0]]) == 0)
+		|| str[i[0]] == '_' || str[i[0]] == '?')
+	{
+		i[0]++;
+		i[1]++;
+		if (str[i[0]] == '?')
+			break ;
+	}
+	if (str[i[0]] == '\0')
+		return ("");
+	while (str[i[0]] != '\0')
+		i[0]++;
+	result = (char *)malloc(sizeof(char) * (i[0] - i[1] + 2));
+	cut_name_support(i, str, result);
 	return (result);
 }
 
-char *get_env_val(int i, char **envcpy)
+char	*get_env_val(int i, char **envcpy)
 {
-	int n;
-	int j;
-	char *env;
+	int		n;
+	int		j;
+	char	*env;
 
-	if(i == -1)
-		return NULL;
+	if (i == -1)
+		return (NULL);
 	n = 0;
 	j = 0;
-	while(envcpy[i][n] != '=')
+	while (envcpy[i][n] != '=')
 		n++;
 	env = (char *)malloc(sizeof(char) * (ft_strlen(envcpy[i]) - n + 1));
 	n++;
-	while(envcpy[i][n] != '\0')
+	while (envcpy[i][n] != '\0')
 	{
 		env[j] = envcpy[i][n];
 		n++;
 		j++;
 	}
 	env[j] = '\0';
-	return env;
+	return (env);
 }
 
-char *ft_getenv(char *name, char **envcpy)
+char	*ft_getenv(char *name, char **envcpy)
 {
-	int i;
-	char *env;
+	int		i;
+	char	*env;
 
-	if(name[0] == '?')
-		return get_env_val(0, envcpy);
+	if (name[0] == '?')
+		return (get_env_val(0, envcpy));
 	i = find_env_line(name, envcpy);
 	env = get_env_val(i, envcpy);
-	return env;
+	return (env);
 }
 
-void handle_dollar(t_node **head, char **envcpy)
+void	handle_dollar_support(char **handle, char **halves)
 {
-	int i;
-	int n;
-	t_node *tmp;
-	char **halves;
-	char *env;
-	char *str;
-	char *tmpstr;
-	char *name;
+	free(handle[0]);
+	free(handle[1]);
+	free(halves[1]);
+	free(halves[0]);
+	free(halves);
+}
 
-	tmp = *head;
-	while(tmp)
+int handle_dollar_support_2(char **handle, char **halves, t_node *tmp, int *i)
+{
+	if (tmp->args[i[0]][i[1] + 1] == '\0')
+		return (1);
+	halves = cutstring(tmp->args[i[0]], i[1]);
+	handle[0] = ft_getenv(halves[1], envcpy);
+	if (handle[0])
+		handle[1] = ft_strjoin(halves[0], handle[0]);
+	else
+		handle[1] = ft_strjoin(halves[0], "");
+	handle[3] = cut_name(halves[1]);
+	handle[2] = ft_strjoin(handle[1], handle[3]);
+	free(tmp->args[i[0]]);
+	tmp->args[i[1]] = handle[2];
+	if (*handle[3] != '\0')
+		free(handle[3]);
+	return (0);
+}
+
+void handle_dollar_support_3(char **handle, char **halves, t_node *tmp, int *i)
+{
+	i[0] = -1;
+	while (tmp->args[++i[0]])
 	{
-		i = 0;
-		while(tmp->args[i])
+		i[1] = -1;
+		while (tmp->args[i[0]][++i[1]])
 		{
-			n = 0;
-			while(tmp->args[i][n])
+			if (tmp->args[i[0]][i[1]] == '$' && tmp->quotes[i[0]][i[1]] != '1')
 			{
-				if(tmp->args[i][n] == '$' && tmp->quotes[i][n] != '1')
-				{
-					if(tmp->args[i][n + 1] == '\0')
-						break;
-					halves = cutString(tmp->args[i], n);
-					env = ft_getenv(halves[1], envcpy);
-					if(env)
-                        str = ft_strjoin(halves[0], env);
-					else
-						str = ft_strjoin(halves[0], "");
-					name = cut_name(halves[1]);
-					tmpstr = ft_strjoin(str, name);
-					free(tmp->args[i]);
-					tmp->args[i] = tmpstr;
-					if (*name != '\0')
-						free(name);
-					free(env);
-					free(str);
-					free(halves[1]);
-					free(halves[0]);
-					free(halves);
-					n = -1;
-				}
-				n++;
+				if(handle_dollar_support_2(handle, halves, tmp, i) == 1)
+					break ;
+				handle_dollar_support(handle, halves);
+				i[1] = -1;
 			}
-			i++;
 		}
+	}
+}
+
+void	handle_dollar(t_node **head, char **envcpy)
+{
+	t_node	*tmp;
+	int		i[2];
+
+	char  //meter tudo num triple pointer
+	char	**halves;
+	char	**handle;
+
+	handle = (char **)malloc(sizeof(char *) * 4);
+	tmp = *head;
+	while (tmp)
+	{
+		handle_dollar_support_3(handle, halves, tmp, i);
 		tmp = tmp->next;
 	}
+	free(handle);
 }
 
 int ft_strncmp(char *s1, char *s2, int n)

@@ -1,12 +1,12 @@
 #include "../minishell.h"
 
-void free_triple(char ***triple)
+void	free_triple(char ***triple)
 {
-	int i;
-	int j;
+	int	i;
+	int	j;
 
 	i = 0;
-	if(!triple)
+	if (!triple)
 		return ;
 	while (triple[i])
 	{
@@ -22,19 +22,19 @@ void free_triple(char ***triple)
 	free(triple);
 }
 
-void free_list(t_node **head)
+void	free_list(t_node **head)
 {
-	t_node *tmp;
+	t_node	*tmp;
 
 	while (*head)
 	{
 		tmp = *head;
 		*head = (*head)->next;
-        if(tmp->cmd)
-            free(tmp->cmd);
-        if(tmp->args)
-            free_array(tmp->args);
-		if(tmp->quotes)
+		if (tmp->cmd)
+			free(tmp->cmd);
+		if (tmp->args)
+			free_array(tmp->args);
+		if (tmp->quotes)
 			free_array(tmp->quotes);
 		free(tmp);
 	}
@@ -42,10 +42,10 @@ void free_list(t_node **head)
 
 void	free_array(char **array)
 {
-	int i;
+	int	i;
 
 	i = 0;
-	if(!array)
+	if (!array)
 		return ;
 	while (array[i])
 	{
@@ -57,10 +57,10 @@ void	free_array(char **array)
 
 void	free_lines(char **array)
 {
-	int i;
+	int	i;
 
 	i = 0;
-	if(!array)
+	if (!array)
 		return ;
 	while (array[i])
 	{
