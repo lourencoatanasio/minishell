@@ -41,6 +41,14 @@ typedef struct s_exporttable
 	struct s_exporttable	*next;
 }				t_extab;
 
+typedef struct s_dollar
+{
+	char **halves;
+	char *env;
+	char *str;
+	char **envcpy;
+}		t_dollar;
+
 void print_array(char **array);
 void print_triple(char ***array);
 int ft_strlen(char *str);
@@ -81,7 +89,7 @@ void shell_echo(t_node **head);
 void	shell_env(char **envpcpy, t_node **head);
 void	shell_unset(t_node **node, char **envpcpy);
 
-void ft_setenv(char *name, char *value, char **envpcpy);
+char  **ft_setenv(char *name, char *value, char **envpcpy);
 void ft_chdir(char *path, char**envpcpy);
 char* ft_strchr(const char* str, int ch);
 void	shell_export(t_node **node, char **envpcpy);

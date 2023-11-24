@@ -234,8 +234,9 @@ int sizeof_array(char **array)
 	int i;
 
 	i = 0;
-	while (array[i])
+	while (array[i]) {
 		i++;
+	}
 	return i;
 }
 
@@ -633,16 +634,13 @@ int pipex(char **envpcpy, t_node **head)
 	}
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
-	if(access(path, F_OK) == 0 || is_builtin(cmd[0], (*head)->args) != 0)
+	printf("path: %s\n", path);
+	if(is_builtin(cmd[0], (*head)->args) != 0 || access(path, F_OK) == 0)
 	{
 		if(node_count(head) == 1 && is_builtin(cmd[0], (*head)->args) == 2)
 			builtin(envpcpy, cmd, head);
-		else if (execute(envpcpy, cmd, path, &tmp) == 1)
-		{
-			free(path);
-			free_array(paths);
-			return (1);
-		}
+		else
+			execute(envpcpy, cmd, path, &tmp);
 	}
 	else
 	{

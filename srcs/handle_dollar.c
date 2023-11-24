@@ -106,70 +106,68 @@ char	*ft_getenv(char *name, char **envcpy)
 	return (env);
 }
 
-void	handle_dollar_support(char **handle, char **halves)
+void handle_free(t_dollar *dollar)
 {
-	free(handle[0]);
-	free(handle[1]);
-	free(halves[1]);
-	free(halves[0]);
-	free(halves);
+	free(dollar->halves[0]);
+	free(dollar->halves[1]);
+	free(dollar->halves);
+	free(dollar->str);
+	free(dollar->env);
 }
 
-int handle_dollar_support_2(char **handle, char **halves, t_node *tmp, int *i)
+void handle_support(t_dollar *dollar, t_node *head, int i, int n)
 {
-	if (tmp->args[i[0]][i[1] + 1] == '\0')
-		return (1);
-	halves = cutstring(tmp->args[i[0]], i[1]);
-	handle[0] = ft_getenv(halves[1], envcpy);
-	if (handle[0])
-		handle[1] = ft_strjoin(halves[0], handle[0]);
+	char *tmpstr;
+	char *name;
+
+	dollar->halves = cutstring(head->args[i], n);
+	dollar->env = ft_getenv(dollar->halves[1], dollar->envcpy);
+	if(dollar->env)
+		dollar->str = ft_strjoin(dollar->halves[0], dollar->env);
 	else
-		handle[1] = ft_strjoin(halves[0], "");
-	handle[3] = cut_name(halves[1]);
-	handle[2] = ft_strjoin(handle[1], handle[3]);
-	free(tmp->args[i[0]]);
-	tmp->args[i[1]] = handle[2];
-	if (*handle[3] != '\0')
-		free(handle[3]);
-	return (0);
+		dollar->str = ft_strjoin(dollar->halves[0], "");
+	name = cut_name(dollar->halves[1]);
+	tmpstr = ft_strjoin(dollar->str, name);
+	free(head->args[i]);
+	head->args[i] = tmpstr;
+	if (*name != '\0')
+		free(name);
 }
 
-void handle_dollar_support_3(char **handle, char **halves, t_node *tmp, int *i)
+void handle_support_2(t_dollar *dollar, t_node *tmp, int i, int n)
 {
-	i[0] = -1;
-	while (tmp->args[++i[0]])
+	n = -1;
+	while(tmp->args[i][++n])
 	{
-		i[1] = -1;
-		while (tmp->args[i[0]][++i[1]])
+		if(tmp->args[i][n] == '$' && tmp->quotes[i][n] != '1')
 		{
-			if (tmp->args[i[0]][i[1]] == '$' && tmp->quotes[i[0]][i[1]] != '1')
-			{
-				if(handle_dollar_support_2(handle, halves, tmp, i) == 1)
-					break ;
-				handle_dollar_support(handle, halves);
-				i[1] = -1;
-			}
+			if(tmp->args[i][n + 1] == '\0')
+				break;
+			handle_support(dollar, tmp, i, n);
+			handle_free(dollar);
 		}
 	}
+	return ;
 }
 
-void	handle_dollar(t_node **head, char **envcpy)
+void handle_dollar(t_node **head, char **envcpy)
 {
-	t_node	*tmp;
-	int		i[2];
+	int i;
+	int n;
+	t_node *tmp;
+	t_dollar *dollar;
 
-	char  //meter tudo num triple pointer
-	char	**halves;
-	char	**handle;
-
-	handle = (char **)malloc(sizeof(char *) * 4);
+	dollar = (t_dollar *)malloc(sizeof(t_dollar));
+	dollar->envcpy = envcpy;
 	tmp = *head;
-	while (tmp)
+	n = -1;
+	while(tmp)
 	{
-		handle_dollar_support_3(handle, halves, tmp, i);
+		i = -1;
+		while(tmp->args[++i])
+			handle_support_2(dollar, tmp, i, n);
 		tmp = tmp->next;
 	}
-	free(handle);
 }
 
 int ft_strncmp(char *s1, char *s2, int n)
@@ -177,6 +175,8 @@ int ft_strncmp(char *s1, char *s2, int n)
     int i;
 
     i = 0;
+	if(!s1)
+		return 1;
     while(s1[i] && s2[i] && i < n)
     {
         if(s1[i] != s2[i])

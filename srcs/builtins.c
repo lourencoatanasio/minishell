@@ -129,10 +129,35 @@ void	set_env_support(char *name, char *value, char **envpcpy, int i)
 	return ;
 }
 
-void	ft_setenv(char *name, char *value, char **envpcpy)
+void dup_and_add(char ***envpcpy, char *name, char *value)
+{
+	char **rtn;
+	char *aux;
+	int i;
+
+	i = 0;
+	printf("############################\n###############################\n");
+	rtn = malloc(sizeof(char *) * (sizeof_array(*envpcpy) + 2)); //fazer assim
+//	printf("size: %d\n", sizeof_array(*envpcpy));
+	i = 0;
+	while (envpcpy[0][i])
+	{
+		printf("*envcpy = %s\n", envpcpy[0][i]);
+		rtn[i] = ft_strdup(envpcpy[0][i]);
+		i++;
+	}
+	printf("i = %i\n", i);
+	aux = ft_strjoin(name, "=");
+	aux = ft_strjoin(aux, value);
+	rtn[i] = ft_strdup(aux);
+	free(aux);
+	rtn[i + 1] = NULL;
+	envpcpy = &rtn;
+}
+
+char	**ft_setenv(char *name, char *value, char **envpcpy)
 {
 	int		i;
-	char	*aux;
 
 	i = -1;
 	while (envpcpy[++i])
@@ -140,22 +165,22 @@ void	ft_setenv(char *name, char *value, char **envpcpy)
 		if (ft_strncmp(envpcpy[i], name, ft_strlen(name)) == 0)
 		{
 			set_env_support(name, value, envpcpy, i);
-			return ;
+			return (envpcpy);
 		}
 	}
+	printf("size: %d\n", sizeof_array(envpcpy));
+//	print_array(envpcpy);
 	if (value != NULL)
-	{
-		aux = ft_strjoin(name, "=");
-		aux = ft_strjoin(aux, value);
-		envpcpy[i] = ft_strdup(aux);
-		free(aux);
-	}
+			dup_and_add(&envpcpy, name, value);
 	else
 	{
 		free(envpcpy[i]);
 		envpcpy[i] = ft_strdup(name);
 	}
-	envpcpy[i + 1] = NULL;
+	printf("size: %d\n",	 sizeof_array(envpcpy));
+	printf("envpcpy[last] = %s\n", envpcpy[sizeof_array(envpcpy) - 1]);
+
+	return envpcpy;
 }
 
 char	*ft_strchr(const char *s, int c)
@@ -304,6 +329,7 @@ void	shell_export(t_node **node, char **envpcpy)
 	}
 	while ((*node)->args[i])
 	{
+		printf("args[%d] = %s\n", i, (*node)->args[i]);
 		shell_export_support(node, envpcpy, i);
 		i++;
 	}
