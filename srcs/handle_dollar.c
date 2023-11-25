@@ -150,7 +150,7 @@ void handle_support_2(t_dollar *dollar, t_node *tmp, int i, int n)
 	return ;
 }
 
-void handle_dollar(t_node **head, char **envcpy)
+void handle_dollar(t_node **head, char ***envcpy)
 {
 	int i;
 	int n;
@@ -158,7 +158,7 @@ void handle_dollar(t_node **head, char **envcpy)
 	t_dollar *dollar;
 
 	dollar = (t_dollar *)malloc(sizeof(t_dollar));
-	dollar->envcpy = envcpy;
+	dollar->envcpy = (*envcpy);
 	tmp = *head;
 	n = -1;
 	while(tmp)
@@ -168,6 +168,7 @@ void handle_dollar(t_node **head, char **envcpy)
 			handle_support_2(dollar, tmp, i, n);
 		tmp = tmp->next;
 	}
+	free(dollar);
 }
 
 int ft_strncmp(char *s1, char *s2, int n)

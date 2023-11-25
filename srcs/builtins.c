@@ -120,67 +120,67 @@ void	shell_pwd(char **envpcpy, t_node **head)
 void	set_env_support(char *name, char *value, char **envpcpy, int i)
 {
 	char	*aux;
+	char 	*aux2;
 
 	aux = ft_strjoin(name, "=");
-	aux = ft_strjoin(aux, value);
+	aux2 = ft_strjoin(aux, value);
 	free(envpcpy[i]);
-	envpcpy[i] = ft_strdup(aux);
+	envpcpy[i] = ft_strdup(aux2);
+	free(aux2);
 	free(aux);
 	return ;
 }
 
-void dup_and_add(char ***envpcpy, char *name, char *value)
+void dup_and_add(char ***envpcpy)
 {
 	char **rtn;
-	char *aux;
 	int i;
 
 	i = 0;
 	printf("############################\n###############################\n");
-	rtn = malloc(sizeof(char *) * (sizeof_array(*envpcpy) + 2)); //fazer assim
-//	printf("size: %d\n", sizeof_array(*envpcpy));
+	rtn = malloc(sizeof(char *) * (sizeof_array((*envpcpy)) + 2));
 	i = 0;
-	while (envpcpy[0][i])
+	while ((*envpcpy)[i])
 	{
-		printf("*envcpy = %s\n", envpcpy[0][i]);
-		rtn[i] = ft_strdup(envpcpy[0][i]);
+		rtn[i] = ft_strdup((*envpcpy)[i]);
 		i++;
 	}
 	printf("i = %i\n", i);
-	aux = ft_strjoin(name, "=");
-	aux = ft_strjoin(aux, value);
-	rtn[i] = ft_strdup(aux);
-	free(aux);
 	rtn[i + 1] = NULL;
-	envpcpy = &rtn;
+	free_array((*envpcpy));
+	(*envpcpy) = rtn;
 }
 
-char	**ft_setenv(char *name, char *value, char **envpcpy)
+char	**ft_setenv(char *name, char *value, char ***envpcpy)
 {
 	int		i;
+	char 	*aux;
+	char	*aux2;
 
 	i = -1;
-	while (envpcpy[++i])
+	while ((*envpcpy)[++i])
 	{
-		if (ft_strncmp(envpcpy[i], name, ft_strlen(name)) == 0)
+		if (ft_strncmp((*envpcpy)[i], name, ft_strlen(name)) == 0) // if name exists
 		{
-			set_env_support(name, value, envpcpy, i);
-			return (envpcpy);
+			set_env_support(name, value, (*envpcpy), i);
+			return ((*envpcpy));
 		}
 	}
-	printf("size: %d\n", sizeof_array(envpcpy));
-//	print_array(envpcpy);
+	dup_and_add(envpcpy);
 	if (value != NULL)
-			dup_and_add(&envpcpy, name, value);
+	{
+		aux = ft_strjoin(name, "=");
+		aux2 = ft_strjoin(aux, value);
+		(*envpcpy)[i] = ft_strdup(aux2);
+		free(aux2);
+		free(aux);
+	}
 	else
 	{
-		free(envpcpy[i]);
-		envpcpy[i] = ft_strdup(name);
+		free((*envpcpy)[i]);
+		(*envpcpy)[i] = ft_strdup(name);
 	}
-	printf("size: %d\n",	 sizeof_array(envpcpy));
-	printf("envpcpy[last] = %s\n", envpcpy[sizeof_array(envpcpy) - 1]);
-
-	return envpcpy;
+	return (*envpcpy);
 }
 
 char	*ft_strchr(const char *s, int c)
@@ -295,7 +295,7 @@ int	export_checker(char *str)
 	return (0);
 }
 
-void	shell_export_support(t_node **node, char **envpcpy, int i)
+void	shell_export_support(t_node **node, char ***envpcpy, int i)
 {
 	char	*aux;
 
@@ -316,14 +316,14 @@ void	shell_export_support(t_node **node, char **envpcpy, int i)
 		ft_setenv((*node)->args[i], NULL, envpcpy);
 }
 
-void	shell_export(t_node **node, char **envpcpy)
+void	shell_export(t_node **node, char ***envpcpy)
 {
 	int	i;
 
 	i = 1;
 	if (!(*node)->args[i])
 	{
-		print_ext_set(envpcpy);
+		print_ext_set((*envpcpy));
 		write((*node)->error, "0\n", 2);
 		return ;
 	}
@@ -361,8 +361,8 @@ void	til(t_node **head, char **envpcpy)
 	}
 	else
 	{
-		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
-		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
+		ft_setenv("PWD", getcwd(NULL, 0), &envpcpy);
 		write((*head)->error, "0\n", 2);
 	}
 }
@@ -376,8 +376,8 @@ void	shell_cd_support(t_node **head, char **envpcpy)
 	}
 	else
 	{
-		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
-		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
+		ft_setenv("PWD", getcwd(NULL, 0), &envpcpy);
 		write((*head)->error, "0\n", 2);
 	}
 }
@@ -401,13 +401,13 @@ void	shell_cd(t_node **head, char **envpcpy)
 	}
 	else
 	{
-		ft_setenv("OLDPWD", getenv("OLDPWD"), envpcpy);
-		ft_setenv("PWD", getcwd(NULL, 0), envpcpy);
+		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
+		ft_setenv("PWD", getcwd(NULL, 0), &envpcpy);
 		write((*head)->error, "0\n", 2);
 	}
 }
 
-void	shell_unset(t_node **node, char **envpcpy)
+void	shell_unset(t_node **node, char ***envpcpy)
 {
 	int	i;
 	int	j;
@@ -417,15 +417,15 @@ void	shell_unset(t_node **node, char **envpcpy)
 	while ((*node)->args[i])
 	{
 		j = 0;
-		while (envpcpy[j])
+		while ((*envpcpy)[j])
 		{
-			if (ft_strncmp(envpcpy[j],
+			if (ft_strncmp((*envpcpy)[j],
 					(*node)->args[i], ft_strlen((*node)->args[i])) == 0)
 			{
 				k = j;
-				while (envpcpy[k])
+				while ((*envpcpy)[k])
 				{
-					envpcpy[k] = envpcpy[k + 1];
+					(*envpcpy)[k] = (*envpcpy)[k + 1];
 					k++;
 				}
 			}

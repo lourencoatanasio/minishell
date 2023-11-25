@@ -76,7 +76,8 @@ char	*find_path(char **paths, char *cmd)
 		free(path);
 		i++;
 	}
-	return (NULL);
+	path = ft_strdup("not found");
+	return (path);
 }
 
 char *ft_trim(char *str, char *set)
@@ -390,20 +391,20 @@ int	is_builtin(char *str, char **args)
 	return (0);
 }
 
-void	builtin(char **envpcpy, char **cmd, t_node **head)
+void	builtin(char ***envpcpy, char **cmd, t_node **head)
 {
 	if (ft_strncmp(cmd[0], "echo", 5) == 0)
 		shell_echo(head);
 	else if (ft_strncmp(cmd[0], "cd", 3) == 0)
-		shell_cd(head, envpcpy);
+		shell_cd(head, (*envpcpy));
 	else if (ft_strncmp(cmd[0], "pwd", 4) == 0)
-		shell_pwd(envpcpy, head);
+		shell_pwd((*envpcpy), head);
 	else if (ft_strncmp(cmd[0], "export", 7) == 0)
 		shell_export(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "unset", 6) == 0)
 		shell_unset(head, envpcpy);
 	else if (ft_strncmp(cmd[0], "env", 4) == 0)
-		shell_env(envpcpy, head);
+		shell_env((*envpcpy), head);
 }
 
 int get_last_value()
@@ -502,7 +503,7 @@ void inputs(t_node **head, int *fd)
 	close(fd[0]);
 }
 
-int child_one(char **envp, char **cmd, char *path, t_node **head)
+int child_one(char ***envp, char **cmd, char *path, t_node **head)
 {
     int fd[2];
     int status;
@@ -533,7 +534,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
             builtin(envp, cmd, head);
         else
         {
-            if (execve(path, cmd, envp) == -1)
+            if (execve(path, cmd, (*envp)) == -1)
                 return (1);
         }
         return (1);
@@ -547,7 +548,7 @@ int child_one(char **envp, char **cmd, char *path, t_node **head)
     return (0);
 }
 
-int    execute(char **envpcpy, char **cmd, char *path, t_node **head)
+int    execute(char ***envpcpy, char **cmd, char *path, t_node **head)
 {
     pid_t pid;
     int status;
@@ -578,7 +579,7 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node **head)
 				exit(0);
 			else if (pid == 0)
 			{
-				if (execve(path, cmd, envpcpy) == -1)
+				if (execve(path, cmd, (*envpcpy)) == -1)
 					exit(0);
 			}
 			else
@@ -596,7 +597,7 @@ int    execute(char **envpcpy, char **cmd, char *path, t_node **head)
 	return (0);
 }
 
-int pipex(char **envpcpy, t_node **head)
+int pipex(char ***envpcpy, t_node **head)
 {
 	char **paths;
 	char *path;
@@ -609,7 +610,7 @@ int pipex(char **envpcpy, t_node **head)
 		return 0;
 	stdout = dup(STDOUT_FILENO);
 	stdin = dup(STDIN_FILENO);
-	paths = get_paths(envpcpy);
+	paths = get_paths((*envpcpy));
 	tmp = *head;
 	while(node_count(head) >= 2 &&tmp->next != NULL)
 	{
@@ -634,7 +635,6 @@ int pipex(char **envpcpy, t_node **head)
 	}
 	cmd = (*tmp).args;
 	path = find_path(paths, (*tmp).cmd);
-	printf("path: %s\n", path);
 	if(is_builtin(cmd[0], (*head)->args) != 0 || access(path, F_OK) == 0)
 	{
 		if(node_count(head) == 1 && is_builtin(cmd[0], (*head)->args) == 2)
@@ -754,9 +754,9 @@ int main(int argc, char **argv, char **envp)
 			handle_quotes(&headmaster);
             if(handle_redirections(&headmaster) == 0)
             {
-                handle_dollar(&headmaster, envcpy);
+                handle_dollar(&headmaster, &envcpy);
 				set_cmd(&headmaster);
-                if (pipex(envcpy, &headmaster) == 1)
+                if (pipex(&envcpy, &headmaster) == 1)
                 {
                     free_list(&headmaster);
                     free_triple(cmds);
