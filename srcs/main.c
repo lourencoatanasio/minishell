@@ -63,6 +63,8 @@ char	*find_path(char **paths, char *cmd)
 	if (access(cmd, F_OK) == 0)
 		return (ft_strdup(cmd));
 	i = 0;
+	if(!paths)
+		return (ft_strdup("not found"));
 	aux = paths[0];
 	paths[0] = ft_strdup(aux + 5);
 	free(aux);
@@ -124,6 +126,7 @@ char *get_quotes(char *str)
 			if (str[i] == '\0')
 			{
 				printf("Error: unclosed quotes\n");
+				free(quotes);
 				return (NULL);
 			}
 			else
@@ -141,6 +144,7 @@ char *get_quotes(char *str)
 			if (str[i] == '\0')
 			{
 				printf("Error: unclosed quotes\n");
+				free(quotes);
 				return (NULL);
 			}
 			else
@@ -195,6 +199,11 @@ char ***store_cmds(char *line)
 	if(!line)
 		return (NULL);
 	quotes = get_quotes(line);
+	if(!quotes)
+	{
+		g_ec = 2;
+		return (NULL);
+	}
 	if (check_pipes(line, quotes) == 1)
 	{
 		free(quotes);
@@ -305,7 +314,7 @@ t_node	*create_node_cmd(char **args, int error)
     return (node);
 }
 
-void	handle_quotes(t_node **head)
+int	handle_quotes(t_node **head)
 {
 	t_node	*tmp;
 	int		i;
@@ -320,6 +329,8 @@ void	handle_quotes(t_node **head)
 			j = 0;
 			while (tmp->args[i][j])
 			{
+				if(tmp->quotes[i] == NULL)
+					return (1);
 				if (tmp->quotes[i][j] == '3')
 				{
 					tmp->args[i] = removeCharAtIndex(tmp->args[i], j);
@@ -332,6 +343,7 @@ void	handle_quotes(t_node **head)
 		}
 		tmp = tmp->next;
 	}
+	return (0);
 }
 
 t_node *create_list(char ***cmds, t_node *head, int error)
@@ -388,6 +400,8 @@ int	is_builtin(char *str, char **args)
 		return (2);
 	if (ft_strncmp(str, "env", 4) == 0)
 		return (1);
+	if (ft_strncmp(str, "exit", 5) == 0)
+		return (3);
 	return (0);
 }
 
@@ -639,6 +653,13 @@ int pipex(char ***envpcpy, t_node **head)
 	{
 		if(node_count(head) == 1 && is_builtin(cmd[0], (*head)->args) == 2)
 			builtin(envpcpy, cmd, head);
+		else if(node_count(head) == 1 && is_builtin(cmd[0], (*head)->args) == 3)
+		{
+			printf("exit\n");
+			free(path);
+			free_array(paths);
+			return (1);
+		}
 		else
 			execute(envpcpy, cmd, path, &tmp);
 	}
@@ -706,6 +727,20 @@ void set_cmd(t_node **head)
 	}
 }
 
+int check_only_spaces(char *line)
+{
+	int i;
+
+	i = 0;
+	while(line[i])
+	{
+		if(line[i] != ' ' && line[i] != '\t')
+			return 0;
+		i++;
+	}
+	return 1;
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	char *line;
@@ -746,13 +781,12 @@ int main(int argc, char **argv, char **envp)
 			free(line);
 			break;
 		}
-        if(line != NULL && ft_strlen(line) > 0)
+        if(line != NULL && ft_strlen(line) > 0 && check_only_spaces(line) == 0)
         {
 			add_history(line);
 			cmds = store_cmds(line);
             headmaster = create_list(cmds, headmaster, error);
-			handle_quotes(&headmaster);
-            if(handle_redirections(&headmaster) == 0)
+            if(handle_quotes(&headmaster) == 0 && handle_redirections(&headmaster) == 0)
             {
                 handle_dollar(&headmaster, &envcpy);
 				set_cmd(&headmaster);

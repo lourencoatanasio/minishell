@@ -122,6 +122,8 @@ void	set_env_support(char *name, char *value, char **envpcpy, int i)
 	char	*aux;
 	char 	*aux2;
 
+	if(value == NULL)
+		return ;
 	aux = ft_strjoin(name, "=");
 	aux2 = ft_strjoin(aux, value);
 	free(envpcpy[i]);
@@ -136,8 +138,6 @@ void dup_and_add(char ***envpcpy)
 	char **rtn;
 	int i;
 
-	i = 0;
-	printf("############################\n###############################\n");
 	rtn = malloc(sizeof(char *) * (sizeof_array((*envpcpy)) + 2));
 	i = 0;
 	while ((*envpcpy)[i])
@@ -145,7 +145,6 @@ void dup_and_add(char ***envpcpy)
 		rtn[i] = ft_strdup((*envpcpy)[i]);
 		i++;
 	}
-	printf("i = %i\n", i);
 	rtn[i + 1] = NULL;
 	free_array((*envpcpy));
 	(*envpcpy) = rtn;
@@ -176,10 +175,8 @@ char	**ft_setenv(char *name, char *value, char ***envpcpy)
 		free(aux);
 	}
 	else
-	{
-		free((*envpcpy)[i]);
 		(*envpcpy)[i] = ft_strdup(name);
-	}
+	free(value);
 	return (*envpcpy);
 }
 
@@ -227,6 +224,7 @@ void	sort_array(char **envsorted)
 	char	*aux;
 
 	i = 0;
+	print_array(envsorted);
 	while (envsorted[i])
 	{
 		j = i + 1;
@@ -248,6 +246,8 @@ void	print_ext_set(char **envpcpy)
 {
 	int		i;
 	char	**envsorted;
+	char	*aux;
+	char 	*aux2;
 
 	i = 1;
 	envsorted = cpy_array(envpcpy);
@@ -256,13 +256,17 @@ void	print_ext_set(char **envpcpy)
 	{
 		if (ft_strstr(envsorted[i], '=') == 1)
 		{
-			printf("declare -x %s=\"%s\"\n", get_name_env(i, envsorted),
-				get_env_val(i, envsorted));
+			aux = get_name_env(i, envsorted);
+			aux2 = get_env_val(i, envsorted);
+			printf("declare -x %s=\"%s\"\n", aux, aux2);
+			free(aux);
+			free(aux2);
 		}
 		else
 			printf("declare -x %s\n", envsorted[i]);
 		i++;
 	}
+	free_array(envsorted);
 }
 
 int	ft_isalpha(int c)
@@ -329,7 +333,6 @@ void	shell_export(t_node **node, char ***envpcpy)
 	}
 	while ((*node)->args[i])
 	{
-		printf("args[%d] = %s\n", i, (*node)->args[i]);
 		shell_export_support(node, envpcpy, i);
 		i++;
 	}
@@ -353,6 +356,7 @@ int	ft_strcmp(const char *s1, const char *s2)
 
 void	til(t_node **head, char **envpcpy)
 {
+	printf("til\n");
 	chdir(getenv("HOME"));
 	if (chdir((*head)->args[1] + 2) != 0)
 	{
@@ -369,21 +373,31 @@ void	til(t_node **head, char **envpcpy)
 
 void	shell_cd_support(t_node **head, char **envpcpy)
 {
-	if (chdir(getenv("HOME")) != 0)
-	{
-		printf("minishell: cd: HOME not set\n");
-		write((*head)->error, "1\n", 2);
-	}
-	else
-	{
-		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
-		ft_setenv("PWD", getcwd(NULL, 0), &envpcpy);
-		write((*head)->error, "0\n", 2);
-	}
+	(void )envpcpy;
+	(void )head;
+	//	char *aux;
+
+	printf("chdir = %d\n", chdir(getenv("HOME")));
+//	if (chdir(getenv("HOME")) != 0)
+//	{
+//		printf("minishell: cd: HOME not set\n");
+//		write((*head)->error, "1\n", 2);
+//	}
+//	else
+//	{
+//		printf("ola\n");
+//		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
+//		aux = getcwd(NULL, 0);
+//		ft_setenv("PWD", aux, &envpcpy);
+//		free(aux);
+//		write((*head)->error, "0\n", 2);
+//	}
 }
 
 void	shell_cd(t_node **head, char **envpcpy)
 {
+	char *aux;
+
 	if ((*head)->args && (*head)->args[1] && (*head)->args[2])
 	{
 		printf("minishell: cd: too many arguments\n");
@@ -396,13 +410,15 @@ void	shell_cd(t_node **head, char **envpcpy)
 	else if (chdir((*head)->args[1]) != 0)
 	{
 		printf("minishell: cd : %s: No such file or directory\n",
-			(*head)->args[1]);
+			   (*head)->args[1]);
 		write((*head)->error, "127\n", 4);
 	}
 	else
 	{
+		aux = getcwd(NULL, 0);
 		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
-		ft_setenv("PWD", getcwd(NULL, 0), &envpcpy);
+		ft_setenv("PWD", aux, &envpcpy);
+		free(aux);
 		write((*head)->error, "0\n", 2);
 	}
 }
@@ -425,9 +441,11 @@ void	shell_unset(t_node **node, char ***envpcpy)
 				k = j;
 				while ((*envpcpy)[k])
 				{
+					free((*envpcpy)[k]);
 					(*envpcpy)[k] = (*envpcpy)[k + 1];
 					k++;
 				}
+				j = k - 1;
 			}
 			j++;
 		}

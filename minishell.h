@@ -44,10 +44,18 @@ typedef struct s_exporttable
 typedef struct s_dollar
 {
 	char **halves;
+	char **quotes;
 	char *env;
 	char *str;
 	char **envcpy;
 }		t_dollar;
+
+typedef struct s_ints
+{
+	int i;
+	int j;
+	int n;
+}		t_ints;
 
 void print_array(char **array);
 void print_triple(char ***array);
@@ -75,7 +83,7 @@ void	sig_handler(void);
 void			sig_handler_block(void);
 char	**cutstring(char *str, int position);
 char *get_name_env(int i, char **envcpy);
-char *cut_name(char *str);
+char *cut_name(char *str, char *quotes, int j);
 void handle_dollar(t_node **head, char ***envcpy);
 char *ft_getenv(char *name, char **envcpy);
 char *get_env_val(int i, char **envcpy);

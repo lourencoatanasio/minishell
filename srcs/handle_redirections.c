@@ -119,20 +119,20 @@ char  *check_file(t_node *head, int i, int n)
 		{
 			if(head->args[i][n + 2] == '>' || head->args[i][n + 2] == '<') // means that theres 3 > or < in a row
 			{
-				printf("minishell: syntax error near unexpected token `newline'\n");
+				printf("1minishell: syntax error near unexpected token `newline'\n");
 				return (NULL);
 			}
 			head->args[i] = removeCharAtIndex(head->args[i], n + 1);
 			head->quotes[i] = removeCharAtIndex(head->quotes[i], n + 1);
 		}
 	}
-	if (head->args[i][n] == '<')
+	else if	(head->args[i][n] == '<')
 	{
 		if(head->args[i][n + 1] == '<')
 		{
 			if(head->args[i][n + 2] == '>' || head->args[i][n + 2] == '<') // means that theres 3 > or < in a row
 			{
-				printf("minishell: syntax error near unexpected token `newline'\n");
+				printf("2minishell: syntax error near unexpected token `newline'\n");
 				return (NULL);
 			}
 			head->args[i] = removeCharAtIndex(head->args[i], n + 1);
@@ -141,7 +141,7 @@ char  *check_file(t_node *head, int i, int n)
 	}
 	head->args[i] = removeCharAtIndex(head->args[i], n);
 	head->quotes[i] = removeCharAtIndex(head->quotes[i], n);
-	if(head->args[i][0] == '\0' && head->args[i + 1] != NULL)
+	if(head->args[i][0] == '\0' && head->args[i + 1] != NULL) // means that the file name is in the next arg
 	{
 		tmp2 = cpy_array(head->args);
 		tmp3 = cpy_array(head->quotes);
@@ -150,12 +150,7 @@ char  *check_file(t_node *head, int i, int n)
 		head->args = removeLineAtIndex(tmp2, i);
 		head->quotes = removeLineAtIndex(tmp3, i);
 	}
-	else
-	{
-		printf("minishell: syntax error near unexpected token `newline'\n");
-		return (NULL);
-	}
-	if (head->args[i][n] != '\0') // means that the file name is in the same arg
+	else if (head->args[i][n] != '\0') // means that the file name is in the same arg
 	{
 		tmp = get_name(head->args, i, n);
 		if(head->args[i][0] == '\0')
@@ -169,10 +164,15 @@ char  *check_file(t_node *head, int i, int n)
 		}
 		if (tmp == NULL)
 		{
-			printf("minishell: syntax error near unexpected token `newline'\n");
+			printf("4minishell: syntax error near unexpected token `newline'\n");
 			return (NULL);
 		}
 		return (tmp);
+	}
+	else
+	{
+		printf("3minishell: syntax error near unexpected token `newline'\n");
+		return (NULL);
 	}
 	return (NULL);
 }
@@ -221,7 +221,6 @@ int	makeHereDoc(char *limit)
 	int fd;
 	char *line;
 
-	printf("makeHereDoc\n");
 	if(check_content("./.heredoc") == 1)
 		unlink("./.heredoc");
 	fd = open("./.heredoc", O_RDWR | O_CREAT | O_APPEND, 0777);
@@ -289,7 +288,6 @@ int    handle_redirections(t_node **head)
 					if (tmp->args[i][n + 1] == '<' && tmp->quotes[i][n + 1] == '0')
 					{
 						path = check_file(tmp, i, n);
-						printf("path = %s\n", path);
 						if (path == NULL)
 							return (1);
 						tmp->here_doc = makeHereDoc(check_name(path));
