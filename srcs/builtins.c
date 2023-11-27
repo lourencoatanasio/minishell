@@ -373,24 +373,21 @@ void	til(t_node **head, char **envpcpy)
 
 void	shell_cd_support(t_node **head, char **envpcpy)
 {
-	(void )envpcpy;
-	(void )head;
-	//	char *aux;
+	char *aux;
 
-//	if (chdir(getenv("HOME")) != 0)
-//	{
-//		printf("minishell: cd: HOME not set\n");
-//		write((*head)->error, "1\n", 2);
-//	}
-//	else
-//	{
-//		printf("ola\n");
-//		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
-//		aux = getcwd(NULL, 0);
-//		ft_setenv("PWD", aux, &envpcpy);
-//		free(aux);
-//		write((*head)->error, "0\n", 2);
-//	}
+	if (chdir(getenv("HOME")) != 0)
+	{
+		printf("minishell: cd: HOME not set\n");
+		write((*head)->error, "1\n", 2);
+	}
+	else
+	{
+		ft_setenv("OLDPWD", getenv("OLDPWD"), &envpcpy);
+		aux = getcwd(NULL, 0);
+		ft_setenv("PWD", aux, &envpcpy);
+		free(aux);
+		write((*head)->error, "0\n", 2);
+	}
 }
 
 void	shell_cd(t_node **head, char **envpcpy)

@@ -769,7 +769,6 @@ int main(int argc, char **argv, char **envp)
 		written = getcwd(NULL, 0);
 		tmp = ft_strjoin(written, "$ ");
 		line = readline(tmp);
-		chdir("/bin");
 		errado = ft_itoa(g_ec);
 		write(error, errado, ft_strlen(errado));
 		write(error, "\n", 1);
