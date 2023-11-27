@@ -407,6 +407,7 @@ int	is_builtin(char *str, char **args)
 
 void	builtin(char ***envpcpy, char **cmd, t_node **head)
 {
+
 	if (ft_strncmp(cmd[0], "echo", 5) == 0)
 		shell_echo(head);
 	else if (ft_strncmp(cmd[0], "cd", 3) == 0)
@@ -768,6 +769,7 @@ int main(int argc, char **argv, char **envp)
 		written = getcwd(NULL, 0);
 		tmp = ft_strjoin(written, "$ ");
 		line = readline(tmp);
+		chdir("/bin");
 		errado = ft_itoa(g_ec);
 		write(error, errado, ft_strlen(errado));
 		write(error, "\n", 1);

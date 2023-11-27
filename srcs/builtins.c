@@ -377,7 +377,6 @@ void	shell_cd_support(t_node **head, char **envpcpy)
 	(void )head;
 	//	char *aux;
 
-	printf("chdir = %d\n", chdir(getenv("HOME")));
 //	if (chdir(getenv("HOME")) != 0)
 //	{
 //		printf("minishell: cd: HOME not set\n");
