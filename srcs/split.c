@@ -1,14 +1,26 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   split.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ldiogo <ldiogo@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/28 12:32:38 by ldiogo            #+#    #+#             */
+/*   Updated: 2023/11/28 12:32:39 by ldiogo           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../minishell.h"
 
-int get_num_words_quote(char* str, char* quotes, char c)
+int	get_num_words_quote(char *str, char *quotes, char c)
 {
-	int i;
-	int words;
+	int	i;
+	int	words;
 
 	i = 0;
 	words = 0;
 	if (!str || !quotes)
-		return 0;
+		return (0);
 	while (str[i] && str[i] == c && quotes[i] != '0')
 		i++;
 	while (i < ft_strlen(str))
@@ -19,34 +31,35 @@ int get_num_words_quote(char* str, char* quotes, char c)
 		while (i < ft_strlen(str) && (str[i] == c && quotes[i] == '0'))
 			i++;
 	}
-	return words;
+	return (words);
 }
 
-char* get_word_quote(char* str, char* quotes, char c, int n)
+char	*get_word_quote(char *str, char *quotes, char c, int n)
 {
-	int i;
-	int len;
-	char* word;
+	int		i;
+	int		len;
+	char	*word;
 
 	i = 0;
 	if (!str || !quotes)
-		return NULL;
+		return (NULL);
 	while (i < ft_strlen(str) && !(str[i] == c && quotes[n] == '0'))
 	{
 		n++;
 		i++;
 	}
 	len = i;
-	word = (char*)malloc(sizeof(char) * (len + 1));
+	word = (char *)malloc(sizeof(char) * (len + 1));
 	if (!word)
-		return NULL;
+		return (NULL);
 	i = 0;
-	while (i < len) {
+	while (i < len)
+	{
 		word[i] = str[i];
 		i++;
 	}
 	word[i] = '\0';
-	return word;
+	return (word);
 }
 
 char	**ft_split_quote(char *str, char *quotes, char c)
@@ -59,30 +72,20 @@ char	**ft_split_quote(char *str, char *quotes, char c)
 	i = 0;
 	n = 0;
 	words = get_num_words_quote(str, quotes, c);
-	if(words == 0)
+	if (words == 0)
 		return (NULL);
 	array = malloc(sizeof(char *) * words + 10);
 	if (!array)
 		return (NULL);
-	while (*str && *str == c)
-	{
-		n++;
+	while (*str && *str == c && n++ >= 0)
 		str++;
-	}
 	while (*str)
 	{
-		array[i] = get_word_quote(str, quotes, c, n);
-		while (*str && !(*str == c && quotes[n] == '0'))
-		{
+		array[i++] = get_word_quote(str, quotes, c, n);
+		while (*str && !(*str == c && quotes[n++] == '0'))
 			str++;
-			n++;
-		}
-		while (*str && (*str == c && quotes[n] == '0'))
-		{
+		while (*str && (*str == c && quotes[n++] == '0'))
 			str++;
-			n++;
-		}
-		i++;
 	}
 	array[i] = (char *) NULL;
 	return (array);
@@ -95,7 +98,7 @@ int	get_num_words(char *str, char c)
 
 	i = 0;
 	words = 0;
-	if(!str)
+	if (!str)
 		return (0);
 	while (str[i] && str[i] == c)
 		i++;
@@ -139,7 +142,7 @@ char	**ft_split(char *str, char c)
 
 	i = 0;
 	words = get_num_words(str, c);
-	if(words == 0)
+	if (words == 0)
 		return (NULL);
 	array = malloc(sizeof(char *) * words + 10);
 	if (!array)

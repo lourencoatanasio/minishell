@@ -57,6 +57,14 @@ typedef struct s_ints
 	int n;
 }		t_ints;
 
+typedef struct s_split
+{
+	int		i;
+	int		n;
+	int		words;
+	char	**array;
+}		t_split;
+
 void print_array(char **array);
 void print_triple(char ***array);
 int ft_strlen(char *str);

@@ -1,8 +1,20 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ldiogo <ldiogo@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/28 12:01:02 by ldiogo            #+#    #+#             */
+/*   Updated: 2023/11/28 12:01:17 by ldiogo           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../minishell.h"
 
-char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
+char	*ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
 {
-	size_t i;
+	size_t	i;
 
 	i = 0;
 	if (dstsize == 0)
@@ -16,10 +28,10 @@ char *ft_strlcpy(char *dst, const char *src, long unsigned int dstsize)
 	return (dst);
 }
 
-char *ft_strdup(char *str)
+char	*ft_strdup(char *str)
 {
-	int i;
-	char *dup;
+	int		i;
+	char	*dup;
 
 	i = 0;
 	dup = malloc(sizeof(char) * ft_strlen(str) + 1);
@@ -29,18 +41,18 @@ char *ft_strdup(char *str)
 		i++;
 	}
 	dup[i] = '\0';
-	return dup;
+	return (dup);
 }
 
-char *ft_strjoin(char *s1, char *s2)
+char	*ft_strjoin(char *s1, char *s2)
 {
-	int i;
-	int j;
-	char *str;
+	int		i;
+	int		j;
+	char	*str;
 
 	i = 0;
 	j = 0;
-	if(!s2)
+	if (!s2)
 		return (s1);
 	str = malloc(sizeof(char) * (ft_strlen(s1) + ft_strlen(s2) + 1));
 	if (!str)

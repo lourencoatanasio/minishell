@@ -339,6 +339,8 @@ int	handle_quotes(t_node **head)
 				}
 				j++;
 			}
+			printf("tmp->args = %s\n", tmp->args[i]);
+			printf("tmp->quotes = %s\n", tmp->quotes[i]);
 			i++;
 		}
 		tmp = tmp->next;
@@ -573,10 +575,12 @@ int    execute(char ***envpcpy, char **cmd, char *path, t_node **head)
 		sig_handler_block();
 		if((*head)->input != 0 || (*head)->here_doc != 0)
 		{
-			if((*head)->input != 0)
-				dup2((*head)->input , STDIN_FILENO);
+			if((*head)->input != 0) {
+				printf("input = %d\n", (*head)->input);
+				printf("aqui1 %d\n", dup2((*head)->input, STDIN_FILENO));
+			}
 			else if((*head)->here_doc != 0)
-				dup2((*head)->here_doc, STDIN_FILENO);
+				printf("aqui2 %d\n", dup2((*head)->here_doc, STDIN_FILENO));
 		}
 		if((*head)->output != 0 || (*head)->append != 0)
 		{
