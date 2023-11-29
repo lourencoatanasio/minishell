@@ -90,7 +90,7 @@ char	*get_name(char **args, int a, int i)
 	while (args[a][i] != '\0' && args[a][i] != '>' && args[a][i] != '<')
 	{
 		name[j] = args[a][i];
-		args[a] = removeCharAtIndex(args[a], i);
+		args[a] = remove_char_at_index(args[a], i);
 		j++;
 	}
 	name[j] = '\0';
@@ -162,8 +162,8 @@ int	check_file_support2(t_node *head, int i, int n)
 		{
 			if (head->args[i][n + 2] == '>' || head->args[i][n + 2] == '<')
 				return (check_file_support4());
-			head->args[i] = removeCharAtIndex(head->args[i], n + 1);
-			head->quotes[i] = removeCharAtIndex(head->quotes[i], n + 1);
+			head->args[i] = remove_char_at_index(head->args[i], n + 1);
+			head->quotes[i] = remove_char_at_index(head->quotes[i], n + 1);
 		}
 	}
 	else if (head->args[i][n] == '<')
@@ -172,8 +172,8 @@ int	check_file_support2(t_node *head, int i, int n)
 		{
 			if (head->args[i][n + 2] == '>' || head->args[i][n + 2] == '<')
 				return (check_file_support4());
-			head->args[i] = removeCharAtIndex(head->args[i], n + 1);
-			head->quotes[i] = removeCharAtIndex(head->quotes[i], n + 1);
+			head->args[i] = remove_char_at_index(head->args[i], n + 1);
+			head->quotes[i] = remove_char_at_index(head->quotes[i], n + 1);
 		}
 	}
 	return (0);
@@ -196,8 +196,8 @@ char	*check_file(t_node *head, int i, int n)
 {
 	if (check_file_support2(head, i, n) == 1)
 		return (NULL);
-	head->args[i] = removeCharAtIndex(head->args[i], n);
-	head->quotes[i] = removeCharAtIndex(head->quotes[i], n);
+	head->args[i] = remove_char_at_index(head->args[i], n);
+	head->quotes[i] = remove_char_at_index(head->quotes[i], n);
 	if (head->args[i][0] == '\0')
 		check_file_support3(head, i);
 	else if (head->args[i][n] == '\0')

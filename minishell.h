@@ -125,7 +125,7 @@ void	builtin(char ***envpcpy, char **cmd, t_node **head);
 int ft_isalnum(int c);
 int ft_isalpha(int c);
 
-void	change_error(char **envcpy, int value);
+void	change_error(char ***envcpy, int value);
 char    *ft_itoa(int n);
 void    write_error(t_node **head);
 

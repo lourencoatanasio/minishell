@@ -77,15 +77,15 @@ char	**ft_split_quote(char *str, char *quotes, char c)
 	array = malloc(sizeof(char *) * words + 10);
 	if (!array)
 		return (NULL);
-	while (*str && *str == c && n++ >= 0)
-		str++;
-	while (*str)
+	while (str[n] && str[n] == c)
+		n++;
+	while (n < ft_strlen(str))
 	{
-		array[i++] = get_word_quote(str, quotes, c, n);
-		while (*str && !(*str == c && quotes[n++] == '0'))
-			str++;
-		while (*str && (*str == c && quotes[n++] == '0'))
-			str++;
+		array[i++] = get_word_quote(&str[n], &quotes[n], c, 0);
+		while (n < ft_strlen(str) && !(str[n] == c && quotes[n] == '0'))
+			n++;
+		while (n < ft_strlen(str) && (str[n] == c && quotes[n] == '0'))
+			n++;
 	}
 	array[i] = (char *) NULL;
 	return (array);
